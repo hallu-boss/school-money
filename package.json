@@ -13,8 +13,10 @@
     "@emotion/styled": "^11.14.1",
     "@mui/material": "^7.3.4",
     "@mui/material-nextjs": "^7.3.3",
+    "@prisma/client": "^6.17.1",
     "next": "15.5.4",
     "next-auth": "^4.24.11",
+    "prisma": "^6.17.1",
     "react": "19.1.0",
     "react-dom": "19.1.0"
   },
