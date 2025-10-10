@@ -5,5 +5,5 @@ export default function Home() {
     <Container>
       <h1>SchoolMoney Project</h1>
     </Container>
-  )
+  );
 }
