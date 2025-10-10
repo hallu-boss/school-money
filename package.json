@@ -8,12 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
-  },
-  "husky": {
-    "hooks": {
-      "pre-push": "echo \"[Husky] pre-push\" && npm install && npm run lint && npm run format:check"
-    }
+    "format:check": "prettier --check .",
+    "prepare": "husky"
   },
   "dependencies": {
     "@emotion/cache": "^11.14.0",
