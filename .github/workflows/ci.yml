@@ -5,22 +5,21 @@ name: Node.js CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ['main']
   pull_request:
-    branches: [ "main" ]
+    branches: ['main']
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     container:
       image: node:20
 
     steps:
-    - uses: actions/checkout@v3
-      with:
-        node-version: 20
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build
-    - run: npm run format:check
+      - uses: actions/checkout@v3
+        with:
+          node-version: 20
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build
+      - run: npm run format:check
