@@ -10,6 +10,11 @@ To work on this project efficiently, please make sure you have the following:
 
 These extensions ensure consistent code formatting and linting across the team.
 
+#### ⚠️ Environment Variables
+
+You will need a valid `.env` file to run the project.
+Please reqest it before continuing.
+
 ### 1. Start the PostgreSQL database
 
 ```bash
