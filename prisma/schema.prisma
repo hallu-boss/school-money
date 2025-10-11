@@ -1,15 +1,140 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
-generator client {
-  provider = "prisma-client-js"
-  output   = "../app/generated/prisma"
-}
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id              String            @id @default(uuid())
+  createdAt       DateTime          @default(now())
+  email           String            @unique
+  password        String
+  name            String?
+  avatarUrl       String?
+  children        Child[]
+  memberships     ClassMembership[]
+  Collection      Collection[]
+  Payment         Payment[]
+  createdClasses  Class[]
+  createdInvoices Invoice[]
+  Withdrawal      Withdrawal[]
+}
+
+model Child {
+  id              String            @id @default(uuid())
+  createdAt       DateTime          @default(now())
+  name            String
+  avatarUrl       String?
+  User            User?             @relation(fields: [userId], references: [id])
+  userId          String?
+  ClassMembership ClassMembership[]
+  Payment         Payment[]
+}
+
+model School {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  name      String
+  classes   Class[]
+}
+
+model Class {
+  id          String            @id @default(uuid())
+  createdAt   DateTime          @default(now())
+  createdBy   User              @relation(fields: [createdById], references: [id])
+  createdById String
+  School      School?           @relation(fields: [schoolId], references: [id])
+  schoolId    String?
+  memberships ClassMembership[]
+  accessCode  String?
+  isArchived  Boolean           @default(false)
+  collections Collection[]
+}
+
+model ClassMembership {
+  id        String              @id @default(uuid())
+  createdAt DateTime            @default(now())
+  class     Class               @relation(fields: [classId], references: [id])
+  classId   String
+  User      User?               @relation(fields: [userId], references: [id])
+  userId    String?
+  child     Child               @relation(fields: [childId], references: [id])
+  childId   String
+  userRole  ClassMembershipRole
+  invitedBy String?
+
+  @@unique([classId, childId])
+}
+
+model CollectionAccount {
+  id           String     @id @default(uuid())
+  createdAt    DateTime   @default(now())
+  collection   Collection @relation(fields: [collectionId], references: [id])
+  collectionId String     @unique
+  iban         String     @unique
+  balance      Decimal    @default(0) @db.Decimal(12, 2)
+}
+
+model Payment {
+  id           String     @id @default(uuid())
+  createdAt    DateTime   @default(now())
+  payer        User       @relation(fields: [payerId], references: [id])
+  payerId      String
+  child        Child      @relation(fields: [childId], references: [id])
+  childId      String
+  collection   Collection @relation(fields: [collectionId], references: [id])
+  collectionId String
+  amount       Decimal    @db.Decimal(10, 2)
+  paidAt       DateTime   @default(now())
+}
+
+model Collection {
+  id             String             @id @default(uuid())
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  tite           String
+  description    String?
+  coverUrl       String?
+  startAt        DateTime
+  endAt          DateTime
+  class          Class              @relation(fields: [classId], references: [id])
+  classId        String
+  author         User               @relation(fields: [authorId], references: [id])
+  authorId       String
+  amountPerChild Decimal            @db.Decimal(10, 2)
+  isClosed       Boolean            @default(false)
+  account        CollectionAccount?
+  accountId      String?
+  payments       Payment[]
+  invoices       Invoice[]
+  withdrawals    Withdrawal[]
+}
+
+model Withdrawal {
+  id            String      @id @default(uuid())
+  createdAt     DateTime    @default(now())
+  Collection    Collection? @relation(fields: [collectionId], references: [id])
+  collectionId  String?
+  amount        Decimal     @db.Decimal(10, 2)
+  collectedBy   User        @relation(fields: [collectedById], references: [id])
+  collectedById String
+}
+
+model Invoice {
+  id           String     @id @default(uuid())
+  createdAt    DateTime   @default(now())
+  createdBy    User       @relation(fields: [createdById], references: [id])
+  createdById  String
+  Collection   Collection @relation(fields: [collectionId], references: [id])
+  collectionId String
+  fileUrl      String
+  description  String
+}
+
+enum ClassMembershipRole {
+  PARENT
+  TREASURER
 }
