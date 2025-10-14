@@ -1,8 +1,6 @@
-
-
-import React from 'react'
-import { auth, signIn } from '@/lib/auth'
-import Link from 'next/link'
+import React from 'react';
+import { auth, signIn } from '@/lib/auth';
+import Link from 'next/link';
 import {
   Container,
   Box,
@@ -11,17 +9,18 @@ import {
   Typography,
   Paper,
   Link as MuiLink,
-} from '@mui/material'
-import { redirect } from 'next/navigation'
+} from '@mui/material';
+import { redirect } from 'next/navigation';
+import { executeAction } from '@/lib/executeAction';
 
 async function handleLogin(formData: FormData) {
-  'use server'
-  try {
-    const result = await signIn('credentials', formData)
-    console.log('signIn result', result)
-  } catch (err) {
-    console.error('signIn error', err)
-  }
+  'use server';
+  await executeAction({
+    actionFn: async () => {
+      await signIn('credentials', formData);
+    },
+    successMessage: 'Signed in successfully',
+  });
 }
 
 export default async function LoginPage() {
@@ -31,13 +30,7 @@ export default async function LoginPage() {
   return (
     <Container maxWidth="sm">
       <Paper elevation={3} sx={{ padding: 4, marginTop: 8 }}>
-        <Box
-          display="flex"
-          component="form"
-          action={handleLogin}
-          flexDirection="column"
-          gap={3}
-        >
+        <Box display="flex" component="form" action={handleLogin} flexDirection="column" gap={3}>
           <Typography variant="h5" align="center">
             Sign In
           </Typography>
@@ -71,5 +64,5 @@ export default async function LoginPage() {
         </Box>
       </Paper>
     </Container>
-  )
+  );
 }
