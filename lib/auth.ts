@@ -1,5 +1,6 @@
 import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
+import db from "./db"
 
 export const {auth, handlers, signIn} = NextAuth({ providers: [
     Credentials({
@@ -8,14 +9,15 @@ export const {auth, handlers, signIn} = NextAuth({ providers: [
             password: {},
         },
         authorize: async (credentials) => {
-            const email = "admin@admin.com";
-            const password = "1234";
+            const user = await db.user.findFirst({
+                where: { email: credentials?.email, password: credentials?.password },
+            });
 
-            if (credentials?.email === email && credentials?.password === password) {
-                return { email, password };
-            } else {
-                throw new Error("Invalid email or password");
+            if (!user) {
+                throw new Error('Invalid email or password');
             }
+
+            return user;
         }
     })
 ] })

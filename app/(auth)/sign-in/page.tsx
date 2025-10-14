@@ -1,7 +1,7 @@
 
 
 import React from 'react'
-import { signIn } from '@/lib/auth'
+import { auth, signIn } from '@/lib/auth'
 import Link from 'next/link'
 import {
   Container,
@@ -12,6 +12,7 @@ import {
   Paper,
   Link as MuiLink,
 } from '@mui/material'
+import { redirect } from 'next/navigation'
 
 async function handleLogin(formData: FormData) {
   'use server'
@@ -23,7 +24,10 @@ async function handleLogin(formData: FormData) {
   }
 }
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  const session = await auth();
+  if (session) redirect('/');
+
   return (
     <Container maxWidth="sm">
       <Paper elevation={3} sx={{ padding: 4, marginTop: 8 }}>
