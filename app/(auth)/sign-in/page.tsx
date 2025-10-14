@@ -35,13 +35,7 @@ export default async function LoginPage() {
             Sign In
           </Typography>
 
-          <TextField
-            label="Email"
-            type="email"
-            name="email"
-            fullWidth
-            spellCheck={false}
-          />
+          <TextField label="Email" type="email" name="email" fullWidth spellCheck={false} />
 
           <TextField
             label="Password"

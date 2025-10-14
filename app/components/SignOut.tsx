@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { Button } from "@mui/material";
-import { signOut } from "next-auth/react";
+import { Button } from '@mui/material';
+import { signOut } from 'next-auth/react';
 
 const SignOut = () => {
   const handleSignOut = async () => {

@@ -1,12 +1,12 @@
-import { schema } from "@/lib/schema";
-import db from "@/lib/db";
-import { executeAction } from "@/lib/executeAction";
+import { schema } from '@/lib/schema';
+import db from '@/lib/db';
+import { executeAction } from '@/lib/executeAction';
 
 const signUp = async (formData: FormData) => {
   return executeAction({
     actionFn: async () => {
-      const email = formData.get("email");
-      const password = formData.get("password");
+      const email = formData.get('email');
+      const password = formData.get('password');
       const validatedData = schema.parse({ email, password });
       await db.user.create({
         data: {
@@ -15,7 +15,7 @@ const signUp = async (formData: FormData) => {
         },
       });
     },
-    successMessage: "Signed up successfully",
+    successMessage: 'Signed up successfully',
   });
 };
 

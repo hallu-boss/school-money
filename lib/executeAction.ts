@@ -1,4 +1,4 @@
-import { isRedirectError } from "next/dist/client/components/redirect-error";
+import { isRedirectError } from 'next/dist/client/components/redirect-error';
 
 type Options<T> = {
   actionFn: () => Promise<T>;
@@ -7,7 +7,7 @@ type Options<T> = {
 
 const executeAction = async <T>({
   actionFn,
-  successMessage = "The actions was successful",
+  successMessage = 'The actions was successful',
 }: Options<T>): Promise<{ success: boolean; message: string }> => {
   try {
     await actionFn();
@@ -23,7 +23,7 @@ const executeAction = async <T>({
 
     return {
       success: false,
-      message: "An error has occurred during executing the action",
+      message: 'An error has occurred during executing the action',
     };
   }
 };

@@ -3,19 +3,12 @@ import { Container, Paper, Typography } from '@mui/material';
 import { redirect } from 'next/navigation';
 import { SignOut } from './components/SignOut';
 
-
 export default async function Home() {
   const session = await auth();
-  if (!session)
-    redirect('/sign-in');
+  if (!session) redirect('/sign-in');
   return (
-     <Container maxWidth="sm" sx={{ mt: 8 }}>
-      <Typography
-        variant="h4"
-        component="h1"
-        align="center"
-        gutterBottom
-      >
+    <Container maxWidth="sm" sx={{ mt: 8 }}>
+      <Typography variant="h4" component="h1" align="center" gutterBottom>
         SchoolMoney Project – HOME page
       </Typography>
 
@@ -36,7 +29,6 @@ export default async function Home() {
 
         <SignOut />
       </Paper>
-
     </Container>
   );
 }
