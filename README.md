@@ -18,7 +18,7 @@ Please reqest it before continuing.
 ### 1. Start the PostgreSQL database
 
 ```bash
-compose up --build -d
+docker compose up --build -d
 ```
 
 ### 2. Install dependencies
