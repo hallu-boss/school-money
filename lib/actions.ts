@@ -20,7 +20,7 @@ const signUp = async (formData: FormData) => {
 
       await db.user.update({
         where: { id: user.id },
-        data: { image: `/uploads/users/${user.id}/avatar.jpg` },
+        data: { image: `/uploads/users/default/avatar.jpg` },
       });
     },
     successMessage: 'Signed up successfully',
