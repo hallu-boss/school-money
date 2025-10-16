@@ -79,6 +79,7 @@ const ChildCard = ({ user }: ChildCardProps) => {
         <DialogContent dividers>
           <Typography margin={2} variant="body1">
             <b>Wiek: </b>9
+            {/* TODO: prawdziwe dane*/}
           </Typography>
         </DialogContent>
         <DialogActions>
