@@ -77,7 +77,6 @@ const ChildCard = ({ user }: ChildCardProps) => {
       <Dialog open={open} onClose={handleClose}>
         <DialogTitle>{basicInformation()}</DialogTitle>
         <DialogContent dividers>
-
           <Typography margin={2} variant="body1">
             <b>Wiek: </b>9
           </Typography>
