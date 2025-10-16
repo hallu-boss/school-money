@@ -6,9 +6,9 @@ services:
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: stronkpassword123
-      POSTGREs_DB: schoolmoneydb
+      POSTGRES_DB: schoolmoneydb
     volumes:
-      - pgdata:/var/lib/posthresql/data
+      - pgdata:/var/lib/postgresql/data
 
 volumes:
   pgdata:

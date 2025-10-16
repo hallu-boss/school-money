@@ -29,7 +29,7 @@ const UserInformation = ({ user }: UserInformationProps) => {
       }}
     >
       <Stack direction="row" spacing={1} alignItems="flex-start">
-        <Box >
+        <Box>
           <Avatar
             src={user.image || undefined}
             alt={user.name || 'Użytkownik'}
@@ -43,7 +43,7 @@ const UserInformation = ({ user }: UserInformationProps) => {
           {/** TODO: dodać reakcje */}
           <Button variant="outlined" endIcon={<EditIcon />}>
             Edytuj dane
-          </Button> 
+          </Button>
         </Box>
         <Box textAlign={'left'}>
           <Typography variant="h6">Dane użytkownika</Typography>
