@@ -11,13 +11,13 @@ export default async function Home() {
   if (!session) redirect('/sign-in');
   console.log(session.user);
 
-  
   const dziecko1: Child = {
-    id: "2342sd",
-    name: "Johan Muller",
-    avatarUrl: "https://www.humanium.org/en/wp-content/uploads/2025/05/shutterstock_2267902633-1024x683.jpg",
-    userId: "1",
-    createdAt:  new Date() 
+    id: '2342sd',
+    name: 'Johan Muller',
+    avatarUrl:
+      'https://www.humanium.org/en/wp-content/uploads/2025/05/shutterstock_2267902633-1024x683.jpg',
+    userId: '1',
+    createdAt: new Date(),
   };
 
   return (
@@ -34,7 +34,7 @@ export default async function Home() {
         }}
       >
         <UserInformation user={session.user} />
-        <ChildCard user={dziecko1}/>
+        <ChildCard user={dziecko1} />
 
         <Typography variant="body1" color="text.secondary">
           Signed in as:

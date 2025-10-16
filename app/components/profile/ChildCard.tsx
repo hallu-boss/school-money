@@ -18,7 +18,8 @@ const ChildCard = ({ user }: ChildCardProps) => {
   }
 
   return (
-    <Paper elevation={5}
+    <Paper
+      elevation={5}
       sx={{
         borderRadius: 10,
         bgcolor: 'grey.80',
@@ -40,9 +41,11 @@ const ChildCard = ({ user }: ChildCardProps) => {
           />
         </Box>
         <Box textAlign={'left'}>
-          <Typography variant='h3'>{user.name}</Typography>
+          <Typography variant="h3">{user.name}</Typography>
           {/* TODO: dodać klasę ucznia*/}
-          <Typography variant='h3' color='#01579b'>IIIC</Typography>
+          <Typography variant="h3" color="#01579b">
+            IIIC
+          </Typography>
         </Box>
       </Stack>
     </Paper>
