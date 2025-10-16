@@ -1,15 +1,30 @@
 'use client';
 
-import { Avatar, Box, Paper, Stack, Typography } from '@mui/material';
+import {
+  Avatar,
+  Box,
+  Paper,
+  Stack,
+  Typography,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+} from '@mui/material';
 import { Child } from '@prisma/client';
 import { Card, CardActionArea, CardContent } from '@mui/material';
+import React, { useState } from 'react';
 
 type ChildCardProps = {
   user?: Child;
-  onClick?: () => void;
 };
 
-const ChildCard = ({ user, onClick }: ChildCardProps) => {
+const ChildCard = ({ user }: ChildCardProps) => {
+  const [open, setOpen] = useState(false);
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
+
   if (!user) {
     return (
       <Paper sx={{ bgcolor: 'grey.80', p: 2, textAlign: 'center' }}>
@@ -18,41 +33,60 @@ const ChildCard = ({ user, onClick }: ChildCardProps) => {
     );
   }
 
+  const basicInformation = () => {
+    return (
+      <Stack direction="row" spacing={1} alignItems="flex-start">
+        <Box>
+          <Avatar
+            src={user.avatarUrl || undefined}
+            alt={user.name || 'Użytkownik'}
+            sx={{
+              width: 120,
+              height: 120,
+              fontSize: 50,
+              bgcolor: 'primary.main',
+            }}
+          />
+        </Box>
+        <Box textAlign={'left'}>
+          <Typography variant="h3">{user.name}</Typography>
+          {/* TODO: dodać klasę ucznia*/}
+          <Typography variant="h3" color="#01579b">
+            IIIC
+          </Typography>
+        </Box>
+      </Stack>
+    );
+  };
+
   return (
-    <Card
-      elevation={5}
-      sx={{
-        borderRadius: 5,
-        bgcolor: 'grey.80',
-        m: 2,
-      }}
-    >
-      <CardActionArea onClick={onClick}>
-        <CardContent>
-          <Stack direction="row" spacing={1} alignItems="flex-start">
-            <Box>
-              <Avatar
-                src={user.avatarUrl || undefined}
-                alt={user.name || 'Użytkownik'}
-                sx={{
-                  width: 120,
-                  height: 120,
-                  fontSize: 50,
-                  bgcolor: 'primary.main',
-                }}
-              />
-            </Box>
-            <Box textAlign={'left'}>
-              <Typography variant="h3">{user.name}</Typography>
-              {/* TODO: dodać klasę ucznia*/}
-              <Typography variant="h3" color="#01579b">
-                IIIC
-              </Typography>
-            </Box>
-          </Stack>
-        </CardContent>
-      </CardActionArea>
-    </Card>
+    <>
+      <Card
+        elevation={5}
+        sx={{
+          borderRadius: 5,
+          bgcolor: 'grey.80',
+          m: 2,
+        }}
+      >
+        <CardActionArea onClick={handleOpen}>
+          <CardContent>{basicInformation()};</CardContent>
+        </CardActionArea>
+      </Card>
+
+      <Dialog open={open} onClose={handleClose}>
+        <DialogTitle>{basicInformation()}</DialogTitle>
+        <DialogContent dividers>
+
+          <Typography margin={2} variant="body1">
+            <b>Wiek: </b>9
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose}>Zamknij</Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 };
 
