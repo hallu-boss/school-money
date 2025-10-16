@@ -15,7 +15,7 @@ export default async function Home() {
 
   const childrenList: Child[] = [
     {
-      id: '2342sd',
+      id: '2342as',
       name: 'Johan Muller',
       avatarUrl:
         'https://www.humanium.org/en/wp-content/uploads/2025/05/shutterstock_2267902633-1024x683.jpg',
@@ -23,7 +23,7 @@ export default async function Home() {
       createdAt: new Date(),
     },
     {
-      id: '2342sd',
+      id: '23427d5',
       name: 'Elie Muller',
       avatarUrl:
         'http://ocdn.eu/pulscms-transforms/1/A2rk9kpTURBXy85NWNlYmQwNTY3NTZjYjZkMWJmY2Q5ZGIyOWFjMjUzMS5qcGeSlQMCzQEXzQu3zQaYkwXNBLDNAqTeAAGhMAE',
@@ -58,7 +58,7 @@ export default async function Home() {
           }}
         >
           {childrenList.map((user) => (
-            <ChildCard key={user.id} user={user} />
+            <ChildCard key={user.id.replace(/\D/g, '')} user={user} />
           ))}
         </Box>
 
