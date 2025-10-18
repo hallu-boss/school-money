@@ -1,27 +1,8 @@
 import React from 'react';
-import { auth, signIn } from '@/lib/auth';
-import Link from 'next/link';
-import {
-  Container,
-  Box,
-  TextField,
-  Button,
-  Typography,
-  Paper,
-  Link as MuiLink,
-} from '@mui/material';
+import { auth } from '@/lib/auth';
+import { Container, Paper } from '@mui/material';
 import { redirect } from 'next/navigation';
-import { executeAction } from '@/lib/executeAction';
-
-async function handleLogin(formData: FormData) {
-  'use server';
-  await executeAction({
-    actionFn: async () => {
-      await signIn('credentials', formData);
-    },
-    successMessage: 'Signed in successfully',
-  });
-}
+import SignInForm from './SignInForm';
 
 export default async function LoginPage() {
   const session = await auth();
@@ -30,32 +11,7 @@ export default async function LoginPage() {
   return (
     <Container maxWidth="sm">
       <Paper elevation={3} sx={{ padding: 4, marginTop: 8 }}>
-        <Box display="flex" component="form" action={handleLogin} flexDirection="column" gap={3}>
-          <Typography variant="h5" align="center">
-            Sign In
-          </Typography>
-
-          <TextField label="Email" type="email" name="email" fullWidth spellCheck={false} />
-
-          <TextField
-            label="Password"
-            type="password"
-            name="password"
-            fullWidth
-            spellCheck={false}
-          />
-
-          <Button variant="contained" type="submit" fullWidth>
-            Sign in
-          </Button>
-
-          <Typography align="center" variant="body2">
-            Don&apos;t have an account?{' '}
-            <MuiLink component={Link} href="/sign-up" underline="hover">
-              Sign up
-            </MuiLink>
-          </Typography>
-        </Box>
+        <SignInForm />
       </Paper>
     </Container>
   );
