@@ -156,8 +156,7 @@ export const EditProfileDialog = ({ open, onClose, user }: EditProfileDialogProp
 
       onClose();
 
-      // Wymuś pełne przeładowanie żeby odświeżyć cache avatara
-      window.location.reload();
+      router.refresh();
     } catch (error) {
       console.error('Błąd przy zapisie profilu:', error);
     }
