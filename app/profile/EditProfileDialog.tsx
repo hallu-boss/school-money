@@ -14,7 +14,9 @@ import {
 } from '@mui/material';
 import { useDropzone } from 'react-dropzone';
 import { User } from '@auth/core/types';
-import { updateUser } from './actions';
+import { updateUserProfile } from './actions';
+import { useRouter } from 'next/navigation';
+import { useMemo } from 'react';
 
 type EditProfileDialogProps = {
   open: boolean;
@@ -23,10 +25,16 @@ type EditProfileDialogProps = {
 };
 
 export const EditProfileDialog = ({ open, onClose, user }: EditProfileDialogProps) => {
+  const router = useRouter();
+
   const [name, setName] = useState(user.name || '');
   const [email, setEmail] = useState(user.email || '');
   const [avatarPreview, setAvatarPreview] = useState(user.image || '');
   const [file, setFile] = useState<File | null>(null);
+
+  // Stany błędów
+  const [nameError, setNameError] = useState('');
+  const [emailError, setEmailError] = useState('');
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
@@ -42,19 +50,113 @@ export const EditProfileDialog = ({ open, onClose, user }: EditProfileDialogProp
     maxFiles: 1,
   });
 
+  // Handler dla zmiany imienia
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setName(value);
+    if (value.trim() !== (user?.name || '')) {
+      validateName(value);
+    } else {
+      setNameError('');
+    }
+  };
+
+  // Sprawdzanie czy są jakieś zmiany
+  const hasChanges = useMemo(() => {
+    const hasNameChange = name.trim() !== (user?.name || '');
+    const hasEmailChange = email.trim() !== (user?.email || '');
+    const hasFileChange = file !== null;
+    return hasNameChange || hasEmailChange || hasFileChange;
+  }, [name, email, file, user?.name, user?.email]);
+
+  // Sprawdzanie czy formularz jest poprawny
+  const isFormValid = useMemo(() => {
+    if (!hasChanges) return false;
+
+    // Jeśli imię się zmieniło, musi być poprawne
+    if (name.trim() !== (user?.name || '')) {
+      if (name.trim().length < 2) return false;
+    }
+
+    // Jeśli email się zmienił, musi być poprawny
+    if (email.trim() !== (user?.email || '')) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email.trim())) return false;
+    }
+
+    return true;
+  }, [name, email, hasChanges, user?.name, user?.email]);
+
+  // Handler dla zmiany emaila
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setEmail(value);
+    if (value.trim() !== (user?.email || '')) {
+      validateEmail(value);
+    } else {
+      setEmailError('');
+    }
+  };
+
+  //Walidacja imienia
+  const validateName = (value: string): boolean => {
+    if (value.trim().length === 0) {
+      setNameError('Imie nie może być puste');
+      return false;
+    }
+
+    if (value.trim().length < 2) {
+      setNameError('Imie musi mieć przynajmniej dwa znaki');
+      return false;
+    }
+    setNameError('');
+    return true;
+  };
+
+  //walidacja email
+  const validateEmail = (value: string): boolean => {
+    if (value.trim().length === 0) {
+      setEmailError('Email nie może być pusty');
+      return false;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(value.trim())) {
+      setEmailError('Nieprawidłowy format email');
+      return false;
+    }
+    setEmailError('');
+    return true;
+  };
   const handleSave = async () => {
+    if (!hasChanges) {
+      console.log('Brak zmian do zapisania');
+      onClose();
+      return;
+    }
+
     try {
       const formData = new FormData();
-      formData.append('name', name);
-      formData.append('email', email);
 
+      if (name.trim() !== (user?.name || '')) {
+        formData.append('name', name.trim());
+      }
+      if (email.trim() !== (user?.email || '')) {
+        formData.append('email', email.trim());
+      }
       if (file) {
         formData.append('file', file);
       }
 
-      const res = await updateUser(formData);
+      const result = await updateUserProfile(formData);
+
+      if (!result.success) {
+        console.error(result.message);
+        return;
+      }
 
       onClose();
+
+      // Wymuś pełne przeładowanie żeby odświeżyć cache avatara
       window.location.reload();
     } catch (error) {
       console.error('Błąd przy zapisie profilu:', error);
@@ -67,8 +169,23 @@ export const EditProfileDialog = ({ open, onClose, user }: EditProfileDialogProp
       <DialogContent
         sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1, minWidth: 350 }}
       >
-        <TextField label="Imię" value={name} onChange={(e) => setName(e.target.value)} />
-        <TextField label="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <TextField
+          label="Imię"
+          value={name}
+          onChange={handleNameChange}
+          error={!!nameError}
+          helperText={nameError || 'Minimum 2 znaki'}
+          required
+        />
+        <TextField
+          label="Email"
+          value={email}
+          onChange={handleEmailChange}
+          error={!!emailError}
+          helperText={emailError || 'Podaj poprawny adres email'}
+          type="email"
+          required
+        />
 
         <Box
           {...getRootProps()}
@@ -99,7 +216,7 @@ export const EditProfileDialog = ({ open, onClose, user }: EditProfileDialogProp
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Anuluj</Button>
-        <Button variant="contained" onClick={handleSave}>
+        <Button variant="contained" onClick={handleSave} disabled={!isFormValid}>
           Zapisz
         </Button>
       </DialogActions>

@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import db from '@/lib/db';
 import { mkdir, stat, unlink, writeFile } from 'fs/promises';
 import path from 'path';
+import { success } from 'zod';
 
 //TODO: zmiana nazwy funkcji
 /**
@@ -11,39 +12,67 @@ import path from 'path';
  * To jest api do uploadowania avatarów użytkownika
  */
 
-export const updateUser = async (formData: FormData) => {
+export const updateUserProfile = async (formData: FormData) => {
   const session = await auth();
   if (!session?.user?.id) {
-    throw new Error('Unauthorized????');
+    throw new Error('Unauthorized');
   }
 
-  const file = formData.get('file') as File;
+  const name = formData.get('name') as string | null;
+  const email = formData.get('email') as string | null;
+  const file = formData.get('file') as File | null;
 
-  if (!file) {
-    return { Success: false, Message: 'No file uploaded' };
+  const updateData: {
+    name?: string;
+    email?: string;
+    image?: string;
+  } = {};
+
+  // Przygotowanie danych
+  if (name && typeof name === 'string') {
+    updateData.name = name.trim();
   }
 
-  const userDir = path.join(process.cwd(), 'public', 'uploads', 'users', session.user.id);
-  await mkdir(userDir, { recursive: true });
+  if (email && typeof email === 'string') {
+    updateData.email = email.trim();
+  }
 
-  const filePath = path.join(userDir, 'avatar.jpg');
+  // Upload avatara jeśli jest plik
+  if (file && file.size > 0) {
+    const userDir = path.join(process.cwd(), 'public', 'uploads', 'users', session.user.id);
+    await mkdir(userDir, { recursive: true });
 
-  // Remove old avatar
-  try {
-    await stat(filePath);
-    await unlink(filePath);
-  } catch {}
+    const filePath = path.join(userDir, 'avatar.jpg');
 
-  const bytes = await file.arrayBuffer();
-  const buffer = Buffer.from(bytes);
-  await writeFile(filePath, buffer);
+    // Usuń stary avatar
+    try {
+      await stat(filePath);
+      await unlink(filePath);
+    } catch {}
 
-  const fileUri = `/uploads/users/${session.user.id}/avatar.jpg`;
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    await writeFile(filePath, buffer);
 
+    updateData.image = `/uploads/users/${session.user.id}/avatar.jpg`;
+  }
+
+  // Jeśli nie ma żadnych zmian
+  if (Object.keys(updateData).length === 0) {
+    return {
+      success: false,
+      message: 'Brak danych do aktualizacji',
+    };
+  }
+
+  // Aktualizuj użytkownika
   await db.user.update({
     where: { id: session.user.id },
-    data: { image: fileUri },
+    data: updateData,
   });
 
-  return { success: true, fileUri };
+  return {
+    success: true,
+    message: 'Profil zaktualizowany',
+  };
 };
