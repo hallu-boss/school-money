@@ -18,15 +18,14 @@ import { updateUserProfile } from './actions';
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 
-type EditProfileDialogProps = {
+type AddChildDialogProps = {
   open: boolean;
   onClose: () => void;
   user: User;
 };
 
-export const EditProfileDialog = ({ open, onClose, user }: EditProfileDialogProps) => {
+export const AddChildDialog = ({ open, onClose, user }: AddChildDialogProps) => {
   const router = useRouter();
-
   const [name, setName] = useState(user.name || '');
   const [email, setEmail] = useState(user.email || '');
   const [avatarPreview, setAvatarPreview] = useState(user.image || '');
@@ -86,17 +85,6 @@ export const EditProfileDialog = ({ open, onClose, user }: EditProfileDialogProp
 
     return true;
   }, [name, email, hasChanges, user?.name, user?.email]);
-
-  // Handler dla zmiany emaila
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setEmail(value);
-    if (value.trim() !== (user?.email || '')) {
-      validateEmail(value);
-    } else {
-      setEmailError('');
-    }
-  };
 
   //Walidacja imienia
   const validateName = (value: string): boolean => {
@@ -165,26 +153,17 @@ export const EditProfileDialog = ({ open, onClose, user }: EditProfileDialogProp
   return (
     <Dialog open={open} onClose={onClose}>
       <DialogContent
-        sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1, minWidth: 350 }}
+        sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1, minWidth: 350 }}
       >
         <Typography variant="h6" sx={{ mb: 1 }}>
           Edytuj profil
         </Typography>
         <TextField
-          label="Imię"
+          label="Imię dziecka"
           value={name}
           onChange={handleNameChange}
           error={!!nameError}
           helperText={nameError || 'Minimum 2 znaki'}
-          required
-        />
-        <TextField
-          label="Email"
-          value={email}
-          onChange={handleEmailChange}
-          error={!!emailError}
-          helperText={emailError || 'Podaj poprawny adres email'}
-          type="email"
           required
         />
 
