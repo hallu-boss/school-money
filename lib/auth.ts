@@ -5,6 +5,7 @@ import { v4 as uuid } from 'uuid';
 import db from './db';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import { schema } from './schema';
+import argon2 from 'argon2';
 
 const adapter = PrismaAdapter(db);
 
@@ -18,15 +19,18 @@ export const { auth, handlers, signIn } = NextAuth({
       },
       authorize: async (credentials) => {
         const validatedCredentials = await schema.parse(credentials);
+
         const user = await db.user.findFirst({
-          where: {
-            email: validatedCredentials.email,
-            password: validatedCredentials.password,
-          },
+          where: { email: validatedCredentials.email },
         });
 
-        if (!user) {
-          throw new Error('Invalid email or password');
+        if (!user || !user.password) {
+          throw new Error('This email is not registered');
+        }
+
+        const isValid = await argon2.verify(user.password, validatedCredentials.password);
+        if (!isValid) {
+          throw new Error('Invalid password');
         }
 
         return user;
