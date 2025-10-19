@@ -3,7 +3,6 @@ import { auth } from '@/lib/auth';
 import db from '@/lib/db';
 import { mkdir, stat, unlink, writeFile } from 'fs/promises';
 import path from 'path';
-import { success } from 'zod';
 
 //TODO: zmiana nazwy funkcji
 /**
