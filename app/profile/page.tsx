@@ -3,14 +3,16 @@ import { Container, Paper, Typography } from '@mui/material';
 import { redirect } from 'next/navigation';
 import { SignOut } from '../components/SignOut';
 import { UserInformation } from './UserInformation';
-import { childrenList } from './data';
 import { ChildCard } from './ChildCard';
 import { Box } from '@mui/material';
+import { getUserChildren } from './actions';
 
 export default async function Home() {
   const session = await auth();
   if (!session) redirect('/sign-in');
   console.log(session.user);
+
+  const children = await getUserChildren();
 
   return (
     <Container sx={{ mt: 8 }}>
@@ -30,15 +32,9 @@ export default async function Home() {
           Twoje dzieci
         </Typography>
 
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: 2,
-          }}
-        >
-          {childrenList.map((user) => (
-            <ChildCard key={user.id.replace(/\D/g, '')} user={user} />
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
+          {children.map((child) => (
+            <ChildCard key={child.id} user={child} />
           ))}
         </Box>
 

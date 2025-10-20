@@ -32,6 +32,14 @@ export const EditProfileDialog = ({ open, onClose, user }: EditProfileDialogProp
   const [avatarPreview, setAvatarPreview] = useState(user.image || '');
   const [file, setFile] = useState<File | null>(null);
 
+  const resetForm = () => {
+    setName('');
+    setEmail('');
+    setFile(null);
+    setAvatarPreview('');
+    setNameError('');
+  };
+
   // Stany błędów
   const [nameError, setNameError] = useState('');
   const [emailError, setEmailError] = useState('');
@@ -154,16 +162,20 @@ export const EditProfileDialog = ({ open, onClose, user }: EditProfileDialogProp
         return;
       }
 
-      onClose();
-
+      handleClose();
       router.refresh();
     } catch (error) {
       console.error('Błąd przy zapisie profilu:', error);
     }
   };
 
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
   return (
-    <Dialog open={open} onClose={onClose}>
+    <Dialog open={open} onClose={handleClose}>
       <DialogContent
         sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1, minWidth: 350 }}
       >

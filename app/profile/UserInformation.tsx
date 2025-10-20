@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Avatar, Box, Paper, Typography, Stack, Button } from '@mui/material';
 import { User } from '@auth/core/types';
 import { EditProfileDialog } from './EditProfileDialog';
-import { AddChildDialog } from './AddChild';
+import { AddChildDialog } from './AddChildDialog';
 
 import EditIcon from '@mui/icons-material/Edit';
 
@@ -63,7 +63,7 @@ const UserInformation = ({ user }: UserInformationProps) => {
             Dodaj dziecko
           </Button>
           <EditProfileDialog open={openEdit} onClose={() => setOpenEdit(false)} user={user} />
-          <AddChildDialog open={openAddChild} onClose={() => setOpenAddChild(false)} user={user} />
+          <AddChildDialog open={openAddChild} onClose={() => setOpenAddChild(false)} />
         </Box>
         <Box textAlign={'left'}>
           <Typography variant="h6">Dane użytkownika</Typography>

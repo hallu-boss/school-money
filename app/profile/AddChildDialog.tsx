@@ -3,7 +3,6 @@
 import { useState, useCallback } from 'react';
 import {
   Dialog,
-  DialogTitle,
   DialogContent,
   DialogActions,
   Button,
@@ -13,27 +12,30 @@ import {
   Typography,
 } from '@mui/material';
 import { useDropzone } from 'react-dropzone';
-import { User } from '@auth/core/types';
-import { updateUserProfile } from './actions';
+import { addChild } from './actions';
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 
 type AddChildDialogProps = {
   open: boolean;
   onClose: () => void;
-  user: User;
 };
 
-export const AddChildDialog = ({ open, onClose, user }: AddChildDialogProps) => {
+export const AddChildDialog = ({ open, onClose }: AddChildDialogProps) => {
   const router = useRouter();
-  const [name, setName] = useState(user.name || '');
-  const [email, setEmail] = useState(user.email || '');
-  const [avatarPreview, setAvatarPreview] = useState(user.image || '');
+  const [name, setName] = useState('');
+  const [avatarPreview, setAvatarPreview] = useState('');
   const [file, setFile] = useState<File | null>(null);
+
+  const resetForm = () => {
+    setName('');
+    setFile(null);
+    setAvatarPreview('');
+    setNameError('');
+  };
 
   // Stany błędów
   const [nameError, setNameError] = useState('');
-  const [emailError, setEmailError] = useState('');
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
@@ -53,7 +55,7 @@ export const AddChildDialog = ({ open, onClose, user }: AddChildDialogProps) => 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setName(value);
-    if (value.trim() !== (user?.name || '')) {
+    if (value.trim() !== '') {
       validateName(value);
     } else {
       setNameError('');
@@ -62,29 +64,22 @@ export const AddChildDialog = ({ open, onClose, user }: AddChildDialogProps) => 
 
   // Sprawdzanie czy są jakieś zmiany
   const hasChanges = useMemo(() => {
-    const hasNameChange = name.trim() !== (user?.name || '');
-    const hasEmailChange = email.trim() !== (user?.email || '');
+    const hasNameChange = name.trim() !== '';
     const hasFileChange = file !== null;
-    return hasNameChange || hasEmailChange || hasFileChange;
-  }, [name, email, file, user?.name, user?.email]);
+    return hasNameChange || hasFileChange;
+  }, [name, file]);
 
   // Sprawdzanie czy formularz jest poprawny
   const isFormValid = useMemo(() => {
     if (!hasChanges) return false;
 
     // Jeśli imię się zmieniło, musi być poprawne
-    if (name.trim() !== (user?.name || '')) {
+    if (name.trim() !== '') {
       if (name.trim().length < 2) return false;
     }
 
-    // Jeśli email się zmienił, musi być poprawny
-    if (email.trim() !== (user?.email || '')) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email.trim())) return false;
-    }
-
     return true;
-  }, [name, email, hasChanges, user?.name, user?.email]);
+  }, [name, hasChanges]);
 
   //Walidacja imienia
   const validateName = (value: string): boolean => {
@@ -101,20 +96,6 @@ export const AddChildDialog = ({ open, onClose, user }: AddChildDialogProps) => 
     return true;
   };
 
-  //walidacja email
-  const validateEmail = (value: string): boolean => {
-    if (value.trim().length === 0) {
-      setEmailError('Email nie może być pusty');
-      return false;
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(value.trim())) {
-      setEmailError('Nieprawidłowy format email');
-      return false;
-    }
-    setEmailError('');
-    return true;
-  };
   const handleSave = async () => {
     if (!hasChanges) {
       console.log('Brak zmian do zapisania');
@@ -125,42 +106,43 @@ export const AddChildDialog = ({ open, onClose, user }: AddChildDialogProps) => 
     try {
       const formData = new FormData();
 
-      if (name.trim() !== (user?.name || '')) {
+      if (name.trim() !== '') {
         formData.append('name', name.trim());
       }
-      if (email.trim() !== (user?.email || '')) {
-        formData.append('email', email.trim());
-      }
+
       if (file) {
         formData.append('file', file);
       }
 
-      const result = await updateUserProfile(formData);
+      const result = await addChild(formData);
 
       if (!result.success) {
         console.error(result.message);
         return;
       }
 
-      onClose();
-
+      handleClose();
       router.refresh();
     } catch (error) {
       console.error('Błąd przy zapisie profilu:', error);
     }
   };
 
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
   return (
-    <Dialog open={open} onClose={onClose}>
+    <Dialog open={open} onClose={handleClose}>
       <DialogContent
         sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1, minWidth: 350 }}
       >
         <Typography variant="h6" sx={{ mb: 1 }}>
-          Edytuj profil
+          Dodaj dziecko
         </Typography>
         <TextField
           label="Imię dziecka"
-          value={name}
           onChange={handleNameChange}
           error={!!nameError}
           helperText={nameError || 'Minimum 2 znaki'}
