@@ -3,7 +3,7 @@ import { Container, Paper, Typography } from '@mui/material';
 import { redirect } from 'next/navigation';
 import { SignOut } from '../components/SignOut';
 import { UserInformation } from './UserInformation';
-import { childrenList } from './childrenData';
+import { childrenList } from './data';
 import { ChildCard } from './ChildCard';
 import { Box } from '@mui/material';
 
