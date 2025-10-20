@@ -3,7 +3,7 @@ import { Container, Paper, Typography } from '@mui/material';
 import { redirect } from 'next/navigation';
 import { SignOut } from '../components/SignOut';
 import { UserInformation } from './UserInformation';
-import { Child } from '@prisma/client';
+import { childrenList } from './childrenData';
 import { ChildCard } from './ChildCard';
 import { Box } from '@mui/material';
 
@@ -11,25 +11,6 @@ export default async function Home() {
   const session = await auth();
   if (!session) redirect('/sign-in');
   console.log(session.user);
-
-  const childrenList: Child[] = [
-    {
-      id: '2342as',
-      name: 'Johan Muller',
-      avatarUrl:
-        'https://www.humanium.org/en/wp-content/uploads/2025/05/shutterstock_2267902633-1024x683.jpg',
-      userId: '1',
-      createdAt: new Date(),
-    },
-    {
-      id: '23427d5',
-      name: 'Elie Muller',
-      avatarUrl:
-        'http://ocdn.eu/pulscms-transforms/1/A2rk9kpTURBXy85NWNlYmQwNTY3NTZjYjZkMWJmY2Q5ZGIyOWFjMjUzMS5qcGeSlQMCzQEXzQu3zQaYkwXNBLDNAqTeAAGhMAE',
-      userId: '1',
-      createdAt: new Date(),
-    },
-  ];
 
   return (
     <Container sx={{ mt: 8 }}>
