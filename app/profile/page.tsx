@@ -34,7 +34,7 @@ export default async function Home() {
 
         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
           {children.map((child) => (
-            <ChildCard key={child.id} user={child} />
+            <ChildCard key={child.id} child={child} />
           ))}
         </Box>
 

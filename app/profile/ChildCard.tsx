@@ -17,15 +17,15 @@ import { Card, CardActionArea, CardContent } from '@mui/material';
 import React, { useState } from 'react';
 
 type ChildCardProps = {
-  user?: Child;
+  child?: Child;
 };
 
-const ChildCard = ({ user }: ChildCardProps) => {
+const ChildCard = ({ child }: ChildCardProps) => {
   const [open, setOpen] = useState(false);
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
-  if (!user) {
+  if (!child) {
     return (
       <Paper sx={{ bgcolor: 'grey.80', p: 2, textAlign: 'center' }}>
         Brak informacji o użytkowniku
@@ -38,8 +38,8 @@ const ChildCard = ({ user }: ChildCardProps) => {
       <Stack direction="row" spacing={1} alignItems="flex-start">
         <Box>
           <Avatar
-            src={user.avatarUrl || undefined}
-            alt={user.name || 'Użytkownik'}
+            src={child.avatarUrl || undefined}
+            alt={child.name || 'Użytkownik'}
             sx={{
               width: 120,
               height: 120,
@@ -49,7 +49,7 @@ const ChildCard = ({ user }: ChildCardProps) => {
           />
         </Box>
         <Box textAlign={'left'}>
-          <Typography variant="h3">{user.name}</Typography>
+          <Typography variant="h3">{child.name}</Typography>
           {/* TODO: dodać klasę ucznia*/}
           <Typography variant="h3" color="#01579b">
             IIIC
