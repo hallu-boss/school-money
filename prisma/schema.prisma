@@ -106,18 +106,17 @@ model School {
 }
 
 model Class {
-  id            String            @id @default(uuid())
-  createdAt     DateTime          @default(now())
-  createdBy     User              @relation(fields: [createdById], references: [id])
-  createdById   String
-  name          String
-  School        School?           @relation(fields: [schoolId], references: [id])
-  schoolId      String?
-  membership    ClassMembership?  @relation(fields: [membershipId], references: [id])
-  membershipId  String?
-  accessCode    String?
-  isArchived    Boolean           @default(false)
-  collections   Collection[]
+  id          String            @id @default(uuid())
+  createdAt   DateTime          @default(now())
+  createdBy   User              @relation(fields: [createdById], references: [id])
+  createdById String
+  name        String
+  School      School?           @relation(fields: [schoolId], references: [id])
+  schoolId    String?
+  memberships ClassMembership[]
+  accessCode  String?
+  isArchived  Boolean           @default(false)
+  collections Collection[]
 }
 
 model ClassMembership {
@@ -131,7 +130,7 @@ model ClassMembership {
   userRole  ClassMembershipRole
   invitedBy String?
 
-  @@unique([classId, childId])
+  @@unique([classId])
 }
 
 model CollectionAccount {
