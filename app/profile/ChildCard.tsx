@@ -12,12 +12,19 @@ import {
   DialogActions,
   Button,
 } from '@mui/material';
-import { Child } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { Card, CardActionArea, CardContent } from '@mui/material';
 import React, { useState } from 'react';
 
+export type ChildWithRelations = Prisma.ChildGetPayload<{
+  include: {
+    membership: { include: { class: { include: { School: true } } } };
+    Payment: true;
+  };
+}>;
+
 type ChildCardProps = {
-  child?: Child;
+  child?: ChildWithRelations;
 };
 
 const ChildCard = ({ child }: ChildCardProps) => {
@@ -32,6 +39,9 @@ const ChildCard = ({ child }: ChildCardProps) => {
       </Paper>
     );
   }
+
+  const childClassName = child.membership?.class?.name ?? 'Brak klasy';
+  const schoolName = child.membership?.class?.School?.name ?? 'Brak szkoły';
 
   const basicInformation = () => {
     return (
@@ -50,10 +60,9 @@ const ChildCard = ({ child }: ChildCardProps) => {
         </Box>
         <Box textAlign={'left'}>
           <Typography variant="h3">{child.name}</Typography>
-          {/* TODO: dodać klasę ucznia*/}
-          <Typography variant="h3" color="#01579b">
-            IIIC
-          </Typography>
+          Klasa: {childClassName}
+          <Typography variant="h3" color="#01579b"></Typography>
+          Szkoła: {schoolName}
         </Box>
       </Stack>
     );
@@ -70,7 +79,7 @@ const ChildCard = ({ child }: ChildCardProps) => {
         }}
       >
         <CardActionArea onClick={handleOpen}>
-          <CardContent>{basicInformation()};</CardContent>
+          <CardContent>{basicInformation()}</CardContent>
         </CardActionArea>
       </Card>
 
@@ -78,7 +87,7 @@ const ChildCard = ({ child }: ChildCardProps) => {
         <DialogTitle>{basicInformation()}</DialogTitle>
         <DialogContent dividers>
           <Typography margin={2} variant="body1">
-            <b>Wiek: </b>9{/* TODO: prawdziwe dane*/}
+            <b>Tutaj będą dane</b>
           </Typography>
         </DialogContent>
         <DialogActions>

@@ -1,6 +1,7 @@
 'use server';
 import { auth } from '@/lib/auth';
 import db from '@/lib/db';
+import { Child } from '@prisma/client';
 import { mkdir, stat, unlink, writeFile } from 'fs/promises';
 import path from 'path';
 
@@ -127,7 +128,14 @@ export async function getUserChildren() {
 
   const children = await db.child.findMany({
     where: { userId: session.user.id },
-    orderBy: { createdAt: 'desc' },
+    include: {
+      membership: {
+        include: {
+          class: { include: { School: true } },
+        },
+      },
+      Payment: true,
+    },
   });
 
   return children;
