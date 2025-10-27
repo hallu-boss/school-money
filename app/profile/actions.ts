@@ -20,11 +20,13 @@ export const updateUserProfile = async (formData: FormData) => {
   const name = formData.get('name') as string | null;
   const email = formData.get('email') as string | null;
   const file = formData.get('file') as File | null;
+  const iban = formData.get('iban') as string | null;
 
   const updateData: {
     name?: string;
     email?: string;
     image?: string;
+    iban?: string;
   } = {};
 
   // Przygotowanie danych
@@ -34,6 +36,10 @@ export const updateUserProfile = async (formData: FormData) => {
 
   if (email && typeof email === 'string') {
     updateData.email = email.trim();
+  }
+
+  if (iban && typeof iban === 'string') {
+    updateData.iban = iban.trim();
   }
 
   // Upload avatara jeśli jest plik

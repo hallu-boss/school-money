@@ -24,7 +24,7 @@ const UserInformation = ({ user }: UserInformationProps) => {
       </Paper>
     );
   }
-
+  const userIban = user.iban ?? 'Nie podano numeru konta';
   return (
     <Paper
       sx={{
@@ -66,7 +66,7 @@ const UserInformation = ({ user }: UserInformationProps) => {
           <AddChildDialog open={openAddChild} onClose={() => setOpenAddChild(false)} />
         </Box>
         <Box textAlign={'left'}>
-          <Typography variant="h6">Dane użytkownika</Typography>
+          <Typography variant="h6">Dane użytkownika:</Typography>
           <p>
             <b>{'Użytkownik: '}</b>
             {user.name}
@@ -74,6 +74,10 @@ const UserInformation = ({ user }: UserInformationProps) => {
           <p>
             <b>{'Email: '}</b>
             {user.email}
+          </p>
+          <p>
+            <b>{'Numer konta: '}</b>
+            {userIban}
           </p>
         </Box>
       </Stack>
