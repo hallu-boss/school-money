@@ -94,7 +94,8 @@ model Child {
   avatarUrl       String?
   User            User?             @relation(fields: [userId], references: [id])
   userId          String?
-  ClassMembership ClassMembership[]
+  membership      ClassMembership?  @relation(fields: [membershipId], references: [id])
+  membershipId    String?
   Payment         Payment[]
 }
 
