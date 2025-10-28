@@ -4,12 +4,26 @@ import db from '@/lib/db';
 import { mkdir, stat, unlink, writeFile } from 'fs/promises';
 import path from 'path';
 
-//TODO: zmiana nazwy funkcji
 /**
  * @param formData
  * @returns Promise<void>
  * To jest api do uploadowania avatarów użytkownika
  */
+
+export const returnProperUser = async (userId?: string) => {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error('Unauthorized');
+  }
+
+  if (!userId) return null;
+
+  const properUser = await db.user.findUnique({
+    where: { id: userId },
+  });
+
+  return properUser;
+};
 
 export const updateUserProfile = async (formData: FormData) => {
   const session = await auth();

@@ -12,19 +12,15 @@ import {
   Typography,
 } from '@mui/material';
 import { useDropzone } from 'react-dropzone';
-import { User } from '@auth/core/types';
+import { User } from '@prisma/client';
 import { updateUserProfile } from '../actions/actions';
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 
-type UserWithIban = User & {
-  iban?: string | null;
-};
-
 type EditProfileDialogProps = {
   open: boolean;
   onClose: () => void;
-  user: UserWithIban;
+  user: User;
 };
 
 export const EditProfileDialog = ({ open, onClose, user }: EditProfileDialogProps) => {

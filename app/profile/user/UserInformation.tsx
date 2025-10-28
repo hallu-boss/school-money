@@ -2,18 +2,13 @@
 
 import { useState } from 'react';
 import { Avatar, Box, Paper, Typography, Stack, Button } from '@mui/material';
-import { User } from '@auth/core/types';
+import { User } from '@prisma/client';
 import { EditProfileDialog } from './EditProfileDialog';
 
 import EditIcon from '@mui/icons-material/Edit';
 
-type UserWithIban = User & {
-  iban?: string | null;
-};
-
 type UserInformationProps = {
-  user?: UserWithIban;
-  createdAt?: Date;
+  user?: User;
 };
 
 const UserInformation = ({ user }: UserInformationProps) => {

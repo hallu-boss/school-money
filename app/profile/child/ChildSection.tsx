@@ -83,14 +83,21 @@ export const ChildSection = () => {
               alt={child.name}
               sx={{ width: 56, height: 56 }}
             />
-            <Box flex={1}>
-              <Typography fontWeight="medium">{child.name}</Typography>
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <School sx={{ fontSize: 16, color: '#666' }} />
-                <Typography variant="body2" color="text.secondary">
-                  Klasa {child.membership?.class.name}
-                </Typography>
-              </Stack>
+            <Box flex={1} display="flex" flexDirection="column" alignItems="flex-start">
+              {/* Imię i nazwisko */}
+              <Typography fontWeight="bold" variant="subtitle1">
+                {child.name ?? 'Brak imienia'}
+              </Typography>
+
+              {/* Szkoła */}
+              <Typography variant="body2" color="text.primary" sx={{ mt: 0.5 }}>
+                Szkoła: {child.membership?.class.School?.name ?? 'Brak szkoły'}
+              </Typography>
+
+              {/* Klasa */}
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+                Klasa: {child.membership?.class.name ?? 'Brak klasy'}
+              </Typography>
             </Box>
 
             <Stack direction="row" spacing={1}>
