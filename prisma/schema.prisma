@@ -14,6 +14,7 @@ model User {
   emailVerified DateTime?
   password      String?
   image         String?
+  iban          String?         @unique
   accounts      Account[]
   sessions      Session[]
   // Optional for WebAuthn support
@@ -93,7 +94,8 @@ model Child {
   avatarUrl       String?
   User            User?             @relation(fields: [userId], references: [id])
   userId          String?
-  ClassMembership ClassMembership[]
+  membership      ClassMembership?  @relation(fields: [membershipId], references: [id])
+  membershipId    String?
   Payment         Payment[]
 }
 
@@ -109,6 +111,7 @@ model Class {
   createdAt   DateTime          @default(now())
   createdBy   User              @relation(fields: [createdById], references: [id])
   createdById String
+  name        String
   School      School?           @relation(fields: [schoolId], references: [id])
   schoolId    String?
   memberships ClassMembership[]
@@ -124,12 +127,11 @@ model ClassMembership {
   classId   String
   User      User?               @relation(fields: [userId], references: [id])
   userId    String?
-  child     Child               @relation(fields: [childId], references: [id])
-  childId   String
+  children  Child[]
   userRole  ClassMembershipRole
   invitedBy String?
 
-  @@unique([classId, childId])
+  @@unique([classId])
 }
 
 model CollectionAccount {
