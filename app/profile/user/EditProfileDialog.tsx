@@ -3,7 +3,6 @@
 import { useState, useCallback } from 'react';
 import {
   Dialog,
-  DialogTitle,
   DialogContent,
   DialogActions,
   Button,
@@ -13,27 +12,39 @@ import {
   Typography,
 } from '@mui/material';
 import { useDropzone } from 'react-dropzone';
-import { User } from '@auth/core/types';
-import { updateUserProfile } from './actions';
+import { User } from '@prisma/client';
+import { updateUserProfile } from '../actions/actions';
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 
-type AddChildDialogProps = {
+type EditProfileDialogProps = {
   open: boolean;
   onClose: () => void;
   user: User;
 };
 
-export const AddChildDialog = ({ open, onClose, user }: AddChildDialogProps) => {
+export const EditProfileDialog = ({ open, onClose, user }: EditProfileDialogProps) => {
   const router = useRouter();
+
   const [name, setName] = useState(user.name || '');
   const [email, setEmail] = useState(user.email || '');
   const [avatarPreview, setAvatarPreview] = useState(user.image || '');
   const [file, setFile] = useState<File | null>(null);
+  const [iban, setIban] = useState(user.iban || '');
+
+  const resetForm = () => {
+    setName('');
+    setEmail('');
+    setFile(null);
+    setAvatarPreview('');
+    setNameError('');
+    setIban('');
+  };
 
   // Stany błędów
   const [nameError, setNameError] = useState('');
   const [emailError, setEmailError] = useState('');
+  const [ibanError, setIbanError] = useState('');
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
@@ -60,13 +71,25 @@ export const AddChildDialog = ({ open, onClose, user }: AddChildDialogProps) => 
     }
   };
 
+  // Handler dla zmiany numeru konta
+  const handleIbanChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setIban(value);
+    if (value.trim() !== (user?.iban || '')) {
+      validateIban(value);
+    } else {
+      setIbanError('');
+    }
+  };
+
   // Sprawdzanie czy są jakieś zmiany
   const hasChanges = useMemo(() => {
     const hasNameChange = name.trim() !== (user?.name || '');
     const hasEmailChange = email.trim() !== (user?.email || '');
     const hasFileChange = file !== null;
-    return hasNameChange || hasEmailChange || hasFileChange;
-  }, [name, email, file, user?.name, user?.email]);
+    const hasIbanChange = iban.trim() !== (user?.iban || '');
+    return hasNameChange || hasEmailChange || hasFileChange || hasIbanChange;
+  }, [name, user?.name, user?.email, user?.iban, email, file, iban]);
 
   // Sprawdzanie czy formularz jest poprawny
   const isFormValid = useMemo(() => {
@@ -83,8 +106,23 @@ export const AddChildDialog = ({ open, onClose, user }: AddChildDialogProps) => 
       if (!emailRegex.test(email.trim())) return false;
     }
 
+    if (iban.trim() !== (user?.iban || '')) {
+      if (!/^\d{26}$/.test(iban.trim())) return false;
+    }
+
     return true;
-  }, [name, email, hasChanges, user?.name, user?.email]);
+  }, [hasChanges, name, user?.name, user?.email, user?.iban, email, iban]);
+
+  // Handler dla zmiany emaila
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setEmail(value);
+    if (value.trim() !== (user?.email || '')) {
+      validateEmail(value);
+    } else {
+      setEmailError('');
+    }
+  };
 
   //Walidacja imienia
   const validateName = (value: string): boolean => {
@@ -101,6 +139,28 @@ export const AddChildDialog = ({ open, onClose, user }: AddChildDialogProps) => 
     return true;
   };
 
+  //walidacja numeru konta
+  const validateIban = (value: string): boolean => {
+    const trimmed = value.trim();
+
+    if (trimmed.length === 0) {
+      setIbanError('Numer konta nie może być pusty');
+      return false;
+    }
+
+    if (!/^\d+$/.test(trimmed)) {
+      setIbanError('Numer konta może zawierać tylko cyfry');
+      return false;
+    }
+
+    if (trimmed.length !== 26) {
+      setIbanError('Numer konta musi mieć dokładnie 26 cyfr');
+      return false;
+    }
+
+    setIbanError('');
+    return true;
+  };
   //walidacja email
   const validateEmail = (value: string): boolean => {
     if (value.trim().length === 0) {
@@ -134,7 +194,12 @@ export const AddChildDialog = ({ open, onClose, user }: AddChildDialogProps) => 
       if (file) {
         formData.append('file', file);
       }
-
+      if (iban.trim() !== (user?.iban || '')) {
+        formData.append('iban', iban.trim());
+      }
+      if (iban.trim() !== (user?.iban || '')) {
+        if (!/^\d{26}$/.test(iban.trim())) return false;
+      }
       const result = await updateUserProfile(formData);
 
       if (!result.success) {
@@ -142,31 +207,51 @@ export const AddChildDialog = ({ open, onClose, user }: AddChildDialogProps) => 
         return;
       }
 
-      onClose();
-
+      handleClose();
       router.refresh();
     } catch (error) {
       console.error('Błąd przy zapisie profilu:', error);
     }
   };
 
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
   return (
-    <Dialog open={open} onClose={onClose}>
+    <Dialog open={open} onClose={handleClose}>
       <DialogContent
-        sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1, minWidth: 350 }}
+        sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1, minWidth: 350 }}
       >
         <Typography variant="h6" sx={{ mb: 1 }}>
           Edytuj profil
         </Typography>
         <TextField
-          label="Imię dziecka"
+          label="Imię"
           value={name}
           onChange={handleNameChange}
           error={!!nameError}
           helperText={nameError || 'Minimum 2 znaki'}
           required
         />
-
+        <TextField
+          label="Email"
+          value={email}
+          onChange={handleEmailChange}
+          error={!!emailError}
+          helperText={emailError || 'Podaj poprawny adres email'}
+          type="email"
+          required
+        />
+        <TextField
+          label="Numer konta"
+          value={iban}
+          onChange={handleIbanChange}
+          error={!!ibanError}
+          helperText={ibanError || 'Podaj poprawny numer konta'}
+          required
+        />
         <Box
           {...getRootProps()}
           sx={{

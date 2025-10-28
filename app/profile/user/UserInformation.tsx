@@ -2,20 +2,17 @@
 
 import { useState } from 'react';
 import { Avatar, Box, Paper, Typography, Stack, Button } from '@mui/material';
-import { User } from '@auth/core/types';
+import { User } from '@prisma/client';
 import { EditProfileDialog } from './EditProfileDialog';
-import { AddChildDialog } from './AddChild';
 
 import EditIcon from '@mui/icons-material/Edit';
 
 type UserInformationProps = {
   user?: User;
-  createdAt?: Date;
 };
 
 const UserInformation = ({ user }: UserInformationProps) => {
   const [openEdit, setOpenEdit] = useState(false);
-  const [openAddChild, setOpenAddChild] = useState(false);
 
   if (!user) {
     return (
@@ -24,7 +21,7 @@ const UserInformation = ({ user }: UserInformationProps) => {
       </Paper>
     );
   }
-
+  const userIban = user.iban ?? 'Nie podano numeru konta';
   return (
     <Paper
       sx={{
@@ -54,19 +51,11 @@ const UserInformation = ({ user }: UserInformationProps) => {
           >
             Edytuj dane
           </Button>
-          <Button
-            variant="outlined"
-            endIcon={<EditIcon />}
-            sx={{ mt: 1 }}
-            onClick={() => setOpenAddChild(true)}
-          >
-            Dodaj dziecko
-          </Button>
+
           <EditProfileDialog open={openEdit} onClose={() => setOpenEdit(false)} user={user} />
-          <AddChildDialog open={openAddChild} onClose={() => setOpenAddChild(false)} user={user} />
         </Box>
         <Box textAlign={'left'}>
-          <Typography variant="h6">Dane użytkownika</Typography>
+          <Typography variant="h6">Dane użytkownika:</Typography>
           <p>
             <b>{'Użytkownik: '}</b>
             {user.name}
@@ -74,6 +63,10 @@ const UserInformation = ({ user }: UserInformationProps) => {
           <p>
             <b>{'Email: '}</b>
             {user.email}
+          </p>
+          <p>
+            <b>{'Numer konta: '}</b>
+            {userIban}
           </p>
         </Box>
       </Stack>
