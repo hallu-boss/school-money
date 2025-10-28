@@ -12,7 +12,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useDropzone } from 'react-dropzone';
-import { addChild } from './actions';
+import { addChild } from '../actions/actions';
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 

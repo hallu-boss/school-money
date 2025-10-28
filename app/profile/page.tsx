@@ -2,10 +2,11 @@ import { auth } from '@/lib/auth';
 import { Container, Paper, Typography } from '@mui/material';
 import { redirect } from 'next/navigation';
 import { SignOut } from '../components/SignOut';
-import { UserInformation } from './UserInformation';
-import { ChildCard } from './ChildCard';
+import { UserInformation } from './user/UserInformation';
+import { ChildCard } from './child/ChildCard';
 import { Box } from '@mui/material';
-import { getUserChildren } from './actions';
+import { getUserChildren } from './actions/actions';
+import { ChildSection } from './child/ChildSection';
 
 export default async function Home() {
   const session = await auth();
@@ -17,7 +18,7 @@ export default async function Home() {
   return (
     <Container sx={{ mt: 8 }}>
       <Typography variant="h4" component="h1" align="center" gutterBottom>
-        SchoolMoney Project – HOME page
+        Mój profil
       </Typography>
 
       <Paper
@@ -27,16 +28,11 @@ export default async function Home() {
           textAlign: 'center',
         }}
       >
+        {/* sekcja usera */}
         <UserInformation user={session.user} />
-        <Typography variant="h3" fontWeight="bold" margin={2}>
-          Twoje dzieci
-        </Typography>
 
-        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
-          {children.map((child) => (
-            <ChildCard key={child.id} child={child} />
-          ))}
-        </Box>
+        {/* sekcja dzieci */}
+        <ChildSection childrenList={children} />
 
         <Typography variant="body1" color="text.secondary">
           Signed in as:

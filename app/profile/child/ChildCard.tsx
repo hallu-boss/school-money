@@ -15,6 +15,7 @@ import {
 import { Prisma } from '@prisma/client';
 import { Card, CardActionArea, CardContent } from '@mui/material';
 import React, { useState } from 'react';
+import { EditChildDialog } from './EditChildDialog';
 
 export type ChildWithRelations = Prisma.ChildGetPayload<{
   include: {
@@ -29,7 +30,13 @@ type ChildCardProps = {
 
 const ChildCard = ({ child }: ChildCardProps) => {
   const [open, setOpen] = useState(false);
-  const handleOpen = () => setOpen(true);
+  const [mode, setMode] = useState<'view' | 'edit'>('view');
+
+  const handleOpen = () => {
+    setMode('view');
+    setOpen(true);
+  };
+  const handleEdit = () => setMode('edit');
   const handleClose = () => setOpen(false);
 
   if (!child) {
@@ -42,14 +49,16 @@ const ChildCard = ({ child }: ChildCardProps) => {
 
   const childClassName = child.membership?.class?.name ?? 'Brak klasy';
   const schoolName = child.membership?.class?.School?.name ?? 'Brak szkoły';
+  const childAvatar = child.avatarUrl;
+  const childName = child.name;
 
   const basicInformation = () => {
     return (
       <Stack direction="row" spacing={1} alignItems="flex-start">
         <Box>
           <Avatar
-            src={child.avatarUrl || undefined}
-            alt={child.name || 'Użytkownik'}
+            src={childAvatar || undefined}
+            alt={childName || 'Użytkownik'}
             sx={{
               width: 120,
               height: 120,
@@ -83,15 +92,28 @@ const ChildCard = ({ child }: ChildCardProps) => {
         </CardActionArea>
       </Card>
 
-      <Dialog open={open} onClose={handleClose}>
-        <DialogTitle>{basicInformation()}</DialogTitle>
+      <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
+        <DialogTitle>{mode === 'view' ? basicInformation() : 'Edytuj dziecko'}</DialogTitle>
+
         <DialogContent dividers>
-          <Typography margin={2} variant="body1">
-            <b>Tutaj będą dane</b>
-          </Typography>
+          {mode === 'view' ? (
+            <Typography margin={2} variant="body1">
+              <b>Tutaj będą dane</b>
+            </Typography>
+          ) : (
+            <EditChildDialog child={child} onClose={handleClose} open={false} />
+          )}
         </DialogContent>
+
         <DialogActions>
-          <Button onClick={handleClose}>Zamknij</Button>
+          {mode === 'view' ? (
+            <>
+              <Button onClick={handleClose}>Zamknij</Button>
+              <Button onClick={handleEdit}>Edytuj</Button>
+            </>
+          ) : (
+            <Button onClick={handleClose}>Anuluj</Button>
+          )}
         </DialogActions>
       </Dialog>
     </>

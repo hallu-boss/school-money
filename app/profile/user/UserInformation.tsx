@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { Avatar, Box, Paper, Typography, Stack, Button } from '@mui/material';
 import { User } from '@auth/core/types';
 import { EditProfileDialog } from './EditProfileDialog';
-import { AddChildDialog } from './AddChildDialog';
 
 import EditIcon from '@mui/icons-material/Edit';
 
@@ -15,7 +14,6 @@ type UserInformationProps = {
 
 const UserInformation = ({ user }: UserInformationProps) => {
   const [openEdit, setOpenEdit] = useState(false);
-  const [openAddChild, setOpenAddChild] = useState(false);
 
   if (!user) {
     return (
@@ -54,16 +52,8 @@ const UserInformation = ({ user }: UserInformationProps) => {
           >
             Edytuj dane
           </Button>
-          <Button
-            variant="outlined"
-            endIcon={<EditIcon />}
-            sx={{ mt: 1 }}
-            onClick={() => setOpenAddChild(true)}
-          >
-            Dodaj dziecko
-          </Button>
+
           <EditProfileDialog open={openEdit} onClose={() => setOpenEdit(false)} user={user} />
-          <AddChildDialog open={openAddChild} onClose={() => setOpenAddChild(false)} />
         </Box>
         <Box textAlign={'left'}>
           <Typography variant="h6">Dane użytkownika:</Typography>

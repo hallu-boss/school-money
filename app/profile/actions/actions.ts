@@ -145,3 +145,5 @@ export async function getUserChildren() {
 
   return children;
 }
+
+export async function updateChild(id: string, formData: FormData) {}

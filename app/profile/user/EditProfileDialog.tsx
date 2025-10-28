@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import { useDropzone } from 'react-dropzone';
 import { User } from '@auth/core/types';
-import { updateUserProfile } from './actions';
+import { updateUserProfile } from '../actions/actions';
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 
