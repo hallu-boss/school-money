@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { Paper, Stack, Typography, Avatar, Box, Button, IconButton } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { School } from '@mui/icons-material';
 import { ChildWithRelations } from './ChildCard';
 import { AddChildDialog } from './AddChildDialog';
 import { EditChildDialog } from './EditChildDialog';
