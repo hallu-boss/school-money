@@ -146,4 +146,18 @@ export async function getUserChildren() {
   return children;
 }
 
-export async function updateChild(id: string, formData: FormData) {}
+export async function updateChild(id: string, formData: FormData) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error('Unauthorized');
+  }
+}
+
+export async function abortChild(id: string) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error('Unauthorized');
+  }
+
+  //TODO: trzeba chyba usuwać kaskadowo przez milion relacji
+}

@@ -1,10 +1,8 @@
 import { auth } from '@/lib/auth';
-import { Container, Paper, Typography } from '@mui/material';
+import { Container, Paper, Stack, Typography } from '@mui/material';
 import { redirect } from 'next/navigation';
 import { SignOut } from '../components/SignOut';
 import { UserInformation } from './user/UserInformation';
-import { ChildCard } from './child/ChildCard';
-import { Box } from '@mui/material';
 import { getUserChildren } from './actions/actions';
 import { ChildSection } from './child/ChildSection';
 
@@ -21,28 +19,18 @@ export default async function Home() {
         Mój profil
       </Typography>
 
-      <Paper
-        sx={{
-          bgcolor: 'grey.100',
-          p: 2,
-          textAlign: 'center',
-        }}
-      >
-        {/* sekcja usera */}
-        <UserInformation user={session.user} />
-
-        {/* sekcja dzieci */}
-        <ChildSection childrenList={children} />
-
-        <Typography variant="body1" color="text.secondary">
-          Signed in as:
-        </Typography>
-
-        <Typography variant="subtitle1" fontWeight={500}>
-          {session.user?.email ?? 'Unknown user'}
-        </Typography>
-
-        <SignOut />
+      <Paper sx={{ bgcolor: 'grey.100', p: 2, textAlign: 'center' }}>
+        <Stack spacing={4}>
+          <UserInformation user={session.user} />
+          <ChildSection childrenList={children} />
+          <Typography variant="body1" color="text.secondary">
+            Signed in as:
+          </Typography>
+          <Typography variant="subtitle1" fontWeight={500}>
+            {session.user?.email ?? 'Unknown user'}
+          </Typography>
+          <SignOut />
+        </Stack>
       </Paper>
     </Container>
   );

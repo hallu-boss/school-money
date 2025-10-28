@@ -25,7 +25,7 @@ type EditChildDialogProps = {
 
 export const EditChildDialog = ({ open, onClose, child }: EditChildDialogProps) => {
   const router = useRouter();
-  const [name, setName] = useState(child.name);
+  const [name, setName] = useState(child.name || '');
   const [avatar, setAvatar] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(child.avatarUrl);
   const [loading, setLoading] = useState(false);

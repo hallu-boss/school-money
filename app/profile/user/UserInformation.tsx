@@ -7,8 +7,12 @@ import { EditProfileDialog } from './EditProfileDialog';
 
 import EditIcon from '@mui/icons-material/Edit';
 
+type UserWithIban = User & {
+  iban?: string | null;
+};
+
 type UserInformationProps = {
-  user?: User;
+  user?: UserWithIban;
   createdAt?: Date;
 };
 
