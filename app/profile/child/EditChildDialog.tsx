@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -14,23 +14,30 @@ import {
 } from '@mui/material';
 import { useDropzone } from 'react-dropzone';
 import { Child } from '@prisma/client';
-import { useRouter } from 'next/navigation';
 import { updateChild } from '../actions/actions';
 
 type EditChildDialogProps = {
   open: boolean;
   onClose: () => void;
   child: Child;
+  onUpdateChild?: () => void;
 };
 
-export const EditChildDialog = ({ open, onClose, child }: EditChildDialogProps) => {
-  const router = useRouter();
+export const EditChildDialog = ({ open, onClose, child, onUpdateChild }: EditChildDialogProps) => {
   const [name, setName] = useState(child.name || '');
   const [avatar, setAvatar] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(child.avatarUrl);
   const [loading, setLoading] = useState(false);
+  const [nameError, setNameError] = useState('');
 
-  // dropzone do zmiany zdjęcia
+  // Resetowanie formularza przy zmianie dziecka
+  useEffect(() => {
+    setName(child.name || '');
+    setPreview(child.avatarUrl || null);
+    setAvatar(null);
+    setNameError('');
+  }, [child]);
+
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     if (file) {
@@ -45,15 +52,46 @@ export const EditChildDialog = ({ open, onClose, child }: EditChildDialogProps) 
     multiple: false,
   });
 
+  // Walidacja imienia
+  const validateName = (value: string): boolean => {
+    if (value.trim().length < 2) {
+      setNameError('Imię musi mieć przynajmniej 2 znaki');
+      return false;
+    }
+    setNameError('');
+    return true;
+  };
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setName(value);
+    if (value.trim() !== child.name) {
+      validateName(value);
+    } else {
+      setNameError('');
+    }
+  };
+
+  // Sprawdzanie, czy coś się zmieniło
+  const hasChanges = useMemo(() => {
+    return name.trim() !== (child.name || '') || avatar !== null;
+  }, [name, avatar, child.name]);
+
+  const isFormValid = useMemo(() => {
+    return hasChanges && validateName(name);
+  }, [hasChanges, name]);
+
   const handleSave = async () => {
+    if (!isFormValid) return;
+
     setLoading(true);
     try {
       const formData = new FormData();
-      formData.append('name', name);
+      if (name.trim() !== child.name) formData.append('name', name.trim());
       if (avatar) formData.append('avatar', avatar);
 
       await updateChild(child.id, formData);
-      router.refresh();
+      onUpdateChild?.();
       onClose();
     } catch (err) {
       console.error(err);
@@ -93,14 +131,16 @@ export const EditChildDialog = ({ open, onClose, child }: EditChildDialogProps) 
           fullWidth
           margin="normal"
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={handleNameChange}
+          error={!!nameError}
+          helperText={nameError || 'Minimum 2 znaki'}
         />
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={loading}>
           Anuluj
         </Button>
-        <Button onClick={handleSave} disabled={loading || !name}>
+        <Button onClick={handleSave} disabled={!isFormValid || loading}>
           Zapisz
         </Button>
       </DialogActions>

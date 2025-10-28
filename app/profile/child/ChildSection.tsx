@@ -1,33 +1,55 @@
 'use client';
-
-import { Child, User } from '@prisma/client';
-import { ChildWithRelations } from './ChildCard';
-import { useState } from 'react';
-import { AddChildDialog } from './AddChildDialog';
-import { Avatar, Box, Paper, Typography, Stack, Button, IconButton } from '@mui/material';
+import { useState, useEffect } from 'react';
+import { Paper, Stack, Typography, Avatar, Box, Button, IconButton } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
-import { School } from '@mui/icons-material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { abortChild } from '../actions/actions';
+import { School } from '@mui/icons-material';
+import { ChildWithRelations } from './ChildCard';
+import { AddChildDialog } from './AddChildDialog';
 import { EditChildDialog } from './EditChildDialog';
+import { getUserChildren, abortChild } from '../actions/actions';
 
-type ChildSectionProps = {
-  childrenList: ChildWithRelations[];
-};
-
-export const ChildSection = ({ childrenList }: ChildSectionProps) => {
+export const ChildSection = () => {
+  const [childrenList, setChildrenList] = useState<ChildWithRelations[]>([]);
   const [openAddChild, setOpenAddChild] = useState(false);
   const [openEditChild, setOpenEditChild] = useState(false);
+  const [activeChild, setActiveChild] = useState<ChildWithRelations | null>(null);
 
-  const handleDeleteChild = (id: string) => {
+  // Fetch dzieci przy montowaniu
+  useEffect(() => {
+    const fetchChildren = async () => {
+      const data = await getUserChildren();
+
+      const sortedData = data.sort((a, b) => a.name.localeCompare(b.name));
+
+      setChildrenList(sortedData);
+    };
+    fetchChildren();
+  }, []);
+
+  // Funkcja odświeżania listy dzieci
+  const refreshChildren = async () => {
+    const data = await getUserChildren();
+
+    const sortedData = data.sort((a, b) => {
+      // Porównanie alfabetyczne imion
+      return a.name.localeCompare(b.name);
+    });
+
+    setChildrenList(sortedData);
+  };
+
+  const handleDeleteChild = async (id: string) => {
     try {
-      const result = abortChild(id);
+      await abortChild(id);
+      refreshChildren();
     } catch (error) {
       console.log(error);
     }
   };
 
-  const handleEditChild = (child: Child) => {
+  const handleEditChild = (child: ChildWithRelations) => {
+    setActiveChild(child);
     setOpenEditChild(true);
   };
 
@@ -56,7 +78,11 @@ export const ChildSection = ({ childrenList }: ChildSectionProps) => {
             variant="outlined"
             sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 2 }}
           >
-            <Avatar src={child.avatarUrl} alt={child.name} sx={{ width: 56, height: 56 }} />
+            <Avatar
+              src={child.avatarUrl ?? undefined}
+              alt={child.name}
+              sx={{ width: 56, height: 56 }}
+            />
             <Box flex={1}>
               <Typography fontWeight="medium">{child.name}</Typography>
               <Stack direction="row" alignItems="center" spacing={1}>
@@ -75,15 +101,20 @@ export const ChildSection = ({ childrenList }: ChildSectionProps) => {
                 <DeleteIcon sx={{ fontSize: 18 }} />
               </IconButton>
             </Stack>
-            <AddChildDialog open={openAddChild} onClose={() => setOpenAddChild(false)} />
-            <EditChildDialog
-              open={openEditChild}
-              onClose={() => setOpenEditChild(false)}
-              child={child}
-            />
           </Paper>
         ))}
       </Stack>
+
+      {/* Dialogi */}
+      <AddChildDialog open={openAddChild} onClose={() => setOpenAddChild(false)} />
+      {activeChild && (
+        <EditChildDialog
+          open={openEditChild}
+          onClose={() => setOpenEditChild(false)}
+          child={activeChild}
+          onUpdateChild={refreshChildren}
+        />
+      )}
     </Paper>
   );
 };

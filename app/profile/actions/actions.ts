@@ -146,11 +146,59 @@ export async function getUserChildren() {
   return children;
 }
 
-export async function updateChild(id: string, formData: FormData) {
+export async function updateChild(childId: string, formData: FormData) {
   const session = await auth();
   if (!session?.user?.id) {
     throw new Error('Unauthorized');
   }
+
+  const name = formData.get('name') as string | null;
+  const avatar = formData.get('avatar') as File | null;
+
+  const updateData: {
+    name?: string;
+    avatarUrl?: string;
+  } = {};
+
+  if (name && typeof name === 'string') {
+    updateData.name = name.trim();
+  }
+
+  if (avatar && avatar.size > 0) {
+    const userDir = path.join(process.cwd(), 'public', 'uploads', 'children', childId);
+    await mkdir(userDir, { recursive: true });
+
+    const filePath = path.join(userDir, 'avatar.jpg');
+
+    // Usuń stary avatar
+    try {
+      await stat(filePath);
+      await unlink(filePath);
+    } catch {}
+
+    const bytes = await avatar.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    await writeFile(filePath, buffer);
+
+    updateData.avatarUrl = `/uploads/children/${childId}/avatar.jpg`;
+  }
+
+  if (Object.keys(updateData).length === 0) {
+    return {
+      success: false,
+      message: 'Brak danych do aktualizacji',
+    };
+  }
+
+  await db.child.update({
+    where: { id: childId },
+    data: updateData,
+  });
+
+  return {
+    success: true,
+    message: 'Profil zaktualizowany',
+  };
 }
 
 export async function abortChild(id: string) {

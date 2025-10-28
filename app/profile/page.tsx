@@ -11,8 +11,6 @@ export default async function Home() {
   if (!session) redirect('/sign-in');
   console.log(session.user);
 
-  const children = await getUserChildren();
-
   return (
     <Container sx={{ mt: 8 }}>
       <Typography variant="h4" component="h1" align="center" gutterBottom>
@@ -22,7 +20,7 @@ export default async function Home() {
       <Paper sx={{ bgcolor: 'grey.100', p: 2, textAlign: 'center' }}>
         <Stack spacing={4}>
           <UserInformation user={session.user} />
-          <ChildSection childrenList={children} />
+          <ChildSection />
           <Typography variant="body1" color="text.secondary">
             Signed in as:
           </Typography>
