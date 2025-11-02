@@ -215,11 +215,35 @@ export async function updateChild(childId: string, formData: FormData) {
   };
 }
 
-export async function abortChild(id: string) {
+export async function abortChild(childId: string) {
   const session = await auth();
   if (!session?.user?.id) {
     throw new Error('Unauthorized');
   }
 
-  //TODO: trzeba chyba usuwać kaskadowo przez milion relacji
+  const child = await db.child.findUnique({
+    where: { id: childId },
+    include: { Payment: true },
+  });
+
+  if (!child) {
+    throw new Error('Child not found');
+  }
+
+  //sprawdzenie czy dzieciak należy do zalogowanego użytkownika
+  if (child.userId !== session.user.id) {
+    throw new Error('Forbidden');
+  }
+
+  // jeśli dzieciak ma przypisane płątności - blokujemy usunięcie
+  if (child.Payment.length > 0) {
+    //TODO: Dodanie obsługi tych błędów do UI
+    throw new Error('Cannot delete child with existing payments');
+  }
+
+  await db.child.delete({
+    where: { id: childId },
+  });
+
+  return { success: true, message: 'Child deleted successfully' };
 }
