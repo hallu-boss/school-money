@@ -109,8 +109,6 @@ export const addChild = async (formData: FormData) => {
     },
   });
 
-  let avatarUrl = '/uploads/default/avatar.jpg';
-
   if (file && file.size > 0) {
     const userDir = path.join(process.cwd(), 'public', 'uploads', 'children', child.id);
     await mkdir(userDir, { recursive: true });
@@ -124,13 +122,13 @@ export const addChild = async (formData: FormData) => {
     const buffer = Buffer.from(bytes);
     await writeFile(filePath, buffer);
 
-    avatarUrl = `/uploads/children/${child.id}/${fileName}`;
-  }
+    const avatarUrl = `/uploads/children/${child.id}/${fileName}`;
 
-  await db.child.update({
-    where: { id: child.id },
-    data: { avatarUrl },
-  });
+    await db.child.update({
+      where: { id: child.id },
+      data: { avatarUrl },
+    });
+  }
 
   return { success: true, message: 'Dodano dziecko' };
 };
@@ -242,6 +240,7 @@ export async function abortChild(childId: string) {
 
   // jeśli dzieciak ma przypisane płątności - blokujemy usunięcie
   if (child.Payment.length > 0) {
+    //TODO: Dodanie obsługi tych błędów do UI
     throw new Error('Cannot delete child with existing payments');
   }
   //TODO: usuwanie folderu bękarta
