@@ -1,7 +1,7 @@
 'use server';
 import { auth } from '@/lib/auth';
 import db from '@/lib/db';
-import { mkdir, stat, unlink, writeFile } from 'fs/promises';
+import { mkdir, readdir, unlink, writeFile } from 'fs/promises';
 import path from 'path';
 
 /**
@@ -43,40 +43,38 @@ export const updateUserProfile = async (formData: FormData) => {
     iban?: string;
   } = {};
 
-  // Przygotowanie danych
-  if (name && typeof name === 'string') {
-    updateData.name = name.trim();
-  }
+  if (name && typeof name === 'string') updateData.name = name.trim();
+  if (email && typeof email === 'string') updateData.email = email.trim();
+  if (iban && typeof iban === 'string') updateData.iban = iban.trim();
 
-  if (email && typeof email === 'string') {
-    updateData.email = email.trim();
-  }
-
-  if (iban && typeof iban === 'string') {
-    updateData.iban = iban.trim();
-  }
-
-  // Upload avatara jeśli jest plik
   if (file && file.size > 0) {
     const userDir = path.join(process.cwd(), 'public', 'uploads', 'users', session.user.id);
     await mkdir(userDir, { recursive: true });
 
-    const filePath = path.join(userDir, 'avatar.jpg');
-
-    // Usuń stary avatar
+    // Usuń poprzedni avatar
     try {
-      await stat(filePath);
-      await unlink(filePath);
-    } catch {}
+      const files = await readdir(userDir);
+      for (const f of files) {
+        if (f.startsWith('avatar_')) {
+          await unlink(path.join(userDir, f));
+        }
+      }
+    } catch {
+      // brak katalogu lub błędu — ignorujemy
+    }
+
+    const timestamp = Date.now();
+    const ext = path.extname(file.name) || '.jpg';
+    const fileName = `avatar_${timestamp}${ext}`;
+    const filePath = path.join(userDir, fileName);
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     await writeFile(filePath, buffer);
 
-    updateData.image = `/uploads/users/${session.user.id}/avatar.jpg`;
+    updateData.image = `/uploads/users/${session.user.id}/${fileName}`;
   }
 
-  // Jeśli nie ma żadnych zmian
   if (Object.keys(updateData).length === 0) {
     return {
       success: false,
@@ -84,7 +82,6 @@ export const updateUserProfile = async (formData: FormData) => {
     };
   }
 
-  // Aktualizuj użytkownika
   await db.user.update({
     where: { id: session.user.id },
     data: updateData,
@@ -116,20 +113,17 @@ export const addChild = async (formData: FormData) => {
     const userDir = path.join(process.cwd(), 'public', 'uploads', 'children', child.id);
     await mkdir(userDir, { recursive: true });
 
-    const filePath = path.join(userDir, `avatar.jpg`);
+    const timestamp = Date.now();
+    const ext = path.extname(file.name) || '.jpg';
+    const fileName = `avatar_${timestamp}${ext}`;
+    const filePath = path.join(userDir, fileName);
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     await writeFile(filePath, buffer);
 
-    const avatarUrl = `/uploads/children/${child.id}/avatar.jpg`;
+    const avatarUrl = `/uploads/children/${child.id}/${fileName}`;
 
-    await db.child.update({
-      where: { id: child.id },
-      data: { avatarUrl },
-    });
-  } else {
-    const avatarUrl = '/uploads/default/avatar.jpg';
     await db.child.update({
       where: { id: child.id },
       data: { avatarUrl },
@@ -182,19 +176,28 @@ export async function updateChild(childId: string, formData: FormData) {
     const userDir = path.join(process.cwd(), 'public', 'uploads', 'children', childId);
     await mkdir(userDir, { recursive: true });
 
-    const filePath = path.join(userDir, 'avatar.jpg');
-
-    // Usuń stary avatar
+    // Usuń poprzedni plik
     try {
-      await stat(filePath);
-      await unlink(filePath);
-    } catch {}
+      const files = await readdir(userDir);
+      for (const file of files) {
+        if (file.startsWith('avatar_')) {
+          await unlink(path.join(userDir, file));
+        }
+      }
+    } catch {
+      // katalog może być pusty
+    }
+
+    const timestamp = Date.now();
+    const ext = path.extname(avatar.name) || '.jpg';
+    const fileName = `avatar_${timestamp}${ext}`;
+    const filePath = path.join(userDir, fileName);
 
     const bytes = await avatar.arrayBuffer();
     const buffer = Buffer.from(bytes);
     await writeFile(filePath, buffer);
 
-    updateData.avatarUrl = `/uploads/children/${childId}/avatar.jpg`;
+    updateData.avatarUrl = `/uploads/children/${childId}/${fileName}`;
   }
 
   if (Object.keys(updateData).length === 0) {
@@ -240,7 +243,7 @@ export async function abortChild(childId: string) {
     //TODO: Dodanie obsługi tych błędów do UI
     throw new Error('Cannot delete child with existing payments');
   }
-
+  //TODO: usuwanie folderu bękarta
   await db.child.delete({
     where: { id: childId },
   });

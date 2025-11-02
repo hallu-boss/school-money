@@ -112,7 +112,11 @@ export const ChildSection = () => {
       </Stack>
 
       {/* Dialogi */}
-      <AddChildDialog open={openAddChild} onClose={() => setOpenAddChild(false)} />
+      <AddChildDialog
+        open={openAddChild}
+        onClose={() => setOpenAddChild(false)}
+        onChildAdded={refreshChildren}
+      />
       {activeChild && (
         <EditChildDialog
           open={openEditChild}
