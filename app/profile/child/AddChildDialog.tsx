@@ -19,9 +19,10 @@ import { useMemo } from 'react';
 type AddChildDialogProps = {
   open: boolean;
   onClose: () => void;
+  onChildAdded?: () => void;
 };
 
-export const AddChildDialog = ({ open, onClose }: AddChildDialogProps) => {
+export const AddChildDialog = ({ open, onClose, onChildAdded }: AddChildDialogProps) => {
   const router = useRouter();
   const [name, setName] = useState('');
   const [avatarPreview, setAvatarPreview] = useState('');
@@ -121,7 +122,10 @@ export const AddChildDialog = ({ open, onClose }: AddChildDialogProps) => {
         return;
       }
 
-      handleClose();
+      resetForm();
+      onChildAdded?.();
+      onClose();
+
       router.refresh();
     } catch (error) {
       console.error('Błąd przy zapisie profilu:', error);

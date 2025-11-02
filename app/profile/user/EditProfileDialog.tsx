@@ -32,14 +32,14 @@ export const EditProfileDialog = ({ open, onClose, user }: EditProfileDialogProp
   const [file, setFile] = useState<File | null>(null);
   const [iban, setIban] = useState(user.iban || '');
 
-  const resetForm = () => {
-    setName('');
-    setEmail('');
-    setFile(null);
-    setAvatarPreview('');
-    setNameError('');
-    setIban('');
-  };
+  // const resetForm = () => {
+  //   setName('');
+  //   setEmail('');
+  //   setFile(null);
+  //   setAvatarPreview('');
+  //   setNameError('');
+  //   setIban('');
+  // };
 
   // Stany błędów
   const [nameError, setNameError] = useState('');
@@ -215,7 +215,7 @@ export const EditProfileDialog = ({ open, onClose, user }: EditProfileDialogProp
   };
 
   const handleClose = () => {
-    resetForm();
+    // resetForm();
     onClose();
   };
 
