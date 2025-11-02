@@ -242,6 +242,7 @@ export async function abortChild(childId: string) {
 
   // jeśli dzieciak ma przypisane płątności - blokujemy usunięcie
   if (child.Payment.length > 0) {
+    //TODO: Dodanie obsługi tych błędów do UI
     throw new Error('Cannot delete child with existing payments');
   }
   //TODO: usuwanie folderu bękarta
