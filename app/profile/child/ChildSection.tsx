@@ -39,6 +39,9 @@ export const ChildSection = () => {
   };
 
   const handleDeleteChild = async (id: string) => {
+    const confirmed = window.confirm('Czy na pewno chcesz usunąć to dziecko?');
+
+    if (!confirmed) return;
     try {
       await abortChild(id);
       refreshChildren();
