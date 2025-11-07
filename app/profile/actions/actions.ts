@@ -1,7 +1,7 @@
 'use server';
 import { auth } from '@/lib/auth';
 import db from '@/lib/db';
-import { mkdir, readdir, unlink, writeFile } from 'fs/promises';
+import { mkdir, readdir, rm, unlink, writeFile } from 'fs/promises';
 import path from 'path';
 
 /**
@@ -243,10 +243,18 @@ export async function abortChild(childId: string) {
     //TODO: Dodanie obsługi tych błędów do UI
     throw new Error('Cannot delete child with existing payments');
   }
-  //TODO: usuwanie folderu bękarta
+
   await db.child.delete({
     where: { id: childId },
   });
+
+  const userDir = path.join(process.cwd(), 'public', 'uploads', 'children', childId);
+
+  try {
+    await rm(userDir, { recursive: true, force: true });
+  } catch (err) {
+    console.error('Błąd przy usuwaniu katalogu:', err);
+  }
 
   return { success: true, message: 'Child deleted successfully' };
 }
