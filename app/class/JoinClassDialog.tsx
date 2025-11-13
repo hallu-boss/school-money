@@ -8,6 +8,7 @@ import {
   Button,
   Stack,
 } from '@mui/material';
+import { useEffect, useState } from 'react';
 
 type JoinClassDialogProps = {
   open: boolean;
@@ -15,16 +16,42 @@ type JoinClassDialogProps = {
 };
 
 export const JoinClassDialog = ({ open, onClose }: JoinClassDialogProps) => {
+  const [classCode, setClassCode] = useState('');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (open) {
+      setClassCode('');
+      setError('');
+    }
+  }, [open]);
+
+  //sprawdzanie czy kod ma wymagane 13 znaków
+  const validateClassCode = (value: string) => {
+    if (value.length !== 13) {
+      setError('Kod musi mieć 13 znaków');
+      return false;
+    }
+  };
+
+  const handleClassCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+
+    if (validateClassCode(value)) {
+      setClassCode(value);
+    }
+  };
+
+  const handleSubmit = () => {
+    if (!validateClassCode(classCode)) {
+      return;
+    }
+
+    onClose();
+  };
+
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="xs"
-      fullWidth
-      PaperProps={{
-        sx: { borderRadius: 3, p: 1 },
-      }}
-    >
+    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
       <DialogTitle
         sx={{
           borderBottom: 1,
@@ -46,6 +73,10 @@ export const JoinClassDialog = ({ open, onClose }: JoinClassDialogProps) => {
               placeholder="Wpisz kod..."
               fullWidth
               variant="outlined"
+              value={classCode}
+              onChange={handleClassCodeChange}
+              error={!!error}
+              helperText={error}
             />
           </Box>
 
@@ -53,7 +84,7 @@ export const JoinClassDialog = ({ open, onClose }: JoinClassDialogProps) => {
             <Button onClick={onClose} color="inherit">
               Anuluj
             </Button>
-            <Button variant="contained" color="primary">
+            <Button variant="contained" color="primary" onClick={handleSubmit}>
               Dołącz
             </Button>
           </Stack>
