@@ -26,7 +26,6 @@ export default async function Home() {
           <Stack spacing={4}>
             <UserInformation user={plainUser} />
             <ChildSection />
-            <SignOut />
           </Stack>
         </Paper>
       </Container>
