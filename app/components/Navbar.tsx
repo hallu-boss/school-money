@@ -11,6 +11,7 @@ export default function Navbar() {
   const pages = [
     { name: 'Home', href: '/' },
     { name: 'Profil', href: '/profile' },
+    { name: 'Klasa', href: '/class' },
   ];
   return (
     <AppBar position="static" color="primary">
