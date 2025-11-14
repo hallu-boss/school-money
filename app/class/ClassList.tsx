@@ -1,7 +1,6 @@
 'use client';
 
 import { Button, Card, Container, Paper, Stack, Typography } from '@mui/material';
-import { getUserClasses } from './actions/actions';
 import { useState } from 'react';
 import { CreateClassDialog } from './CreateClassDialog';
 import { AssignChildDialog } from './AssignChildDialog';
@@ -14,10 +13,7 @@ export const ClassList = () => {
   const [openJoinClass, setOpenJoinClass] = useState(false);
   const [openAssignChild, setOpenAssignChild] = useState(false);
 
-  const fetchClasses = async () => {
-    const data = await getUserClasses();
-  };
-
+  //TODO: można zablokować przycisk przypisania dziecka w momencie kiedy nie jesteś przypisany do żadnej klasy
   return (
     <>
       <Container maxWidth="md" sx={{ mt: 4 }}>
