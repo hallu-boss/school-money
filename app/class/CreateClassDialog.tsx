@@ -7,13 +7,18 @@ import {
   DialogContent,
   DialogTitle,
   FormControl,
+  InputLabel,
   MenuItem,
   Select,
   Snackbar,
   TextField,
   Typography,
 } from '@mui/material';
-import { useState } from 'react';
+import { School } from '@prisma/client';
+import { useEffect, useState } from 'react';
+import { createClass, getSchools } from './actions/actions';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 type CreateClassProps = {
   open: boolean;
@@ -21,12 +26,24 @@ type CreateClassProps = {
 };
 
 export const CreateClassDialog = ({ open, onClose }: CreateClassProps) => {
-  const [schoolSearch, setSchoolSearch] = useState('');
-  const [selectedClass, setSelectedClass] = useState('');
+  const router = useRouter();
+
+  const [selectedSchool, setSelectedSchool] = useState('');
+  const [className, setClassName] = useState('');
   const [joinCode, setJoinCode] = useState('');
   const [openCopyCodeAlert, setOpenCopyCodeAlert] = useState(false);
+  const [schools, setSchools] = useState<School[]>([]);
+  const [classImage, setClassImage] = useState<string | null>(null);
+
+  useEffect(() => {
+    getSchools().then(setSchools).catch(console.error);
+  }, []);
 
   const handleClose = () => {
+    setSelectedSchool('');
+    setClassName('');
+    setJoinCode('');
+    setClassImage('');
     onClose();
   };
 
@@ -39,12 +56,67 @@ export const CreateClassDialog = ({ open, onClose }: CreateClassProps) => {
     );
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = () => {
+        setClassImage(reader.result as string); // base64 image
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // nazwa klasy będzie miała wielkie litery w celu łatwiejszej weryfikacji
+  const handleClassNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.toUpperCase().trim();
+
+    setClassName(value);
+  };
+
   const copyCode = () => {
     navigator.clipboard.writeText(joinCode);
     setOpenCopyCodeAlert(true);
   };
 
-  const handleSave = () => {
+  //TODO: error niech się jakoś wyświetla może jako powiadomienie albo coś nie wiem
+  const handleSave = async () => {
+    try {
+      if (!selectedSchool) {
+        return;
+      }
+
+      if (!className || className.length < 2) {
+        return;
+      }
+
+      if (!joinCode || joinCode.length !== 13) {
+        return;
+      }
+
+      const formData = new FormData();
+
+      formData.append('schoolName', selectedSchool);
+      formData.append('className', className);
+      formData.append('joinCode', joinCode);
+
+      if (classImage) {
+        formData.append('classImage', classImage);
+      }
+
+      const result = await createClass(formData);
+
+      if (!result.success) {
+        console.error(result.message);
+        return;
+      }
+
+      handleClose();
+      router.refresh();
+    } catch (error) {
+      console.error('Błąd przy zapisie klasy: ', error);
+    }
+
     onClose();
   };
   return (
@@ -80,15 +152,31 @@ export const CreateClassDialog = ({ open, onClose }: CreateClassProps) => {
                     justifyContent: 'center',
                     border: 4,
                     borderColor: 'primary.light',
+                    overflow: 'hidden',
+                    cursor: 'pointer',
                   }}
+                  onClick={() => document.getElementById('class-image-input')?.click()}
                 >
-                  <PersonAdd sx={{ fontSize: 48, color: 'text.secondary' }} />
+                  {classImage ? (
+                    <Image
+                      src={classImage}
+                      alt="Class"
+                      width={128}
+                      height={128}
+                      style={{ objectFit: 'cover', borderRadius: '50%' }}
+                    />
+                  ) : (
+                    <PersonAdd sx={{ fontSize: 48, color: 'text.secondary' }} />
+                  )}
                 </Box>
+                <input
+                  type="file"
+                  id="class-image-input"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={handleImageChange}
+                />
               </Box>
-
-              <Typography variant="subtitle1" fontWeight="600" textAlign="center">
-                Zdjęcie klasy
-              </Typography>
 
               <Box
                 sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, width: '100%', mt: 2 }}
@@ -110,12 +198,25 @@ export const CreateClassDialog = ({ open, onClose }: CreateClassProps) => {
               <Typography variant="h6" fontWeight="600" gutterBottom>
                 Wyszukaj szkołę
               </Typography>
-              <TextField
-                fullWidth
-                placeholder="Wyszukaj szkołę dziecka"
-                value={schoolSearch}
-                onChange={(e) => setSchoolSearch(e.target.value)}
-              />
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="school-select-label">Wybierz szkołę</InputLabel>
+                <Select
+                  labelId="school-select-label"
+                  value={selectedSchool}
+                  onChange={(e) => setSelectedSchool(e.target.value)}
+                  label="Wybierz szkołę"
+                  displayEmpty
+                >
+                  <MenuItem value="" disabled>
+                    Wybierz szkołę
+                  </MenuItem>
+                  {schools.map((s) => (
+                    <MenuItem key={s.id} value={s.id}>
+                      {s.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Box>
 
             {/* Class Selection */}
@@ -123,24 +224,14 @@ export const CreateClassDialog = ({ open, onClose }: CreateClassProps) => {
               <Typography variant="body1" fontWeight="500" gutterBottom>
                 Klasa dziecka
               </Typography>
-              <FormControl fullWidth>
-                <Select
-                  value={selectedClass}
-                  onChange={(e) => setSelectedClass(e.target.value)}
-                  displayEmpty
-                >
-                  {/* to będzie do wywalenia */}
-                  <MenuItem value="" disabled>
-                    Wybierz klasę
-                  </MenuItem>
-                  <MenuItem value="1a">1A</MenuItem>
-                  <MenuItem value="1b">1B</MenuItem>
-                  <MenuItem value="2a">2A</MenuItem>
-                  <MenuItem value="2b">2B</MenuItem>
-                  <MenuItem value="3a">3A</MenuItem>
-                  <MenuItem value="3b">3B</MenuItem>
-                </Select>
-              </FormControl>
+              <TextField
+                label="Nazwa klasy"
+                placeholder="Np. 1A, 2B"
+                fullWidth
+                value={className}
+                onChange={handleClassNameChange}
+                sx={{ mt: 2 }}
+              />
             </Box>
 
             {/* Join Code Section */}
