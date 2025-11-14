@@ -96,7 +96,7 @@ export const CreateClassDialog = ({ open, onClose }: CreateClassProps) => {
 
       const formData = new FormData();
 
-      formData.append('schoolName', selectedSchool);
+      formData.append('schoolId', selectedSchool);
       formData.append('className', className);
       formData.append('joinCode', joinCode);
 
