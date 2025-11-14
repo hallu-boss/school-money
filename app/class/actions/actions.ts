@@ -2,7 +2,6 @@
 
 import { auth } from '@/lib/auth';
 import db from '@/lib/db';
-import { success } from 'zod';
 
 export const getSchools = async () => {
   const session = await auth();
