@@ -1,7 +1,6 @@
 import { auth } from '@/lib/auth';
 import { Container, Paper, Typography } from '@mui/material';
 import { redirect } from 'next/navigation';
-import { SignOut } from './components/SignOut';
 import Navbar from './components/Navbar';
 
 export default async function Home() {
@@ -29,8 +28,6 @@ export default async function Home() {
           <Typography variant="subtitle1" fontWeight={500}>
             {session.user?.email ?? 'Unknown user'}
           </Typography>
-
-          <SignOut />
         </Paper>
       </Container>
     </>
