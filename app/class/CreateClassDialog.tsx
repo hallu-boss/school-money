@@ -23,9 +23,10 @@ import { useRouter } from 'next/navigation';
 type CreateClassProps = {
   open: boolean;
   onClose: () => void;
+  onCreated: () => void;
 };
 
-export const CreateClassDialog = ({ open, onClose }: CreateClassProps) => {
+export const CreateClassDialog = ({ open, onClose, onCreated }: CreateClassProps) => {
   const router = useRouter();
 
   const [selectedSchool, setSelectedSchool] = useState('');
@@ -96,7 +97,7 @@ export const CreateClassDialog = ({ open, onClose }: CreateClassProps) => {
 
       const formData = new FormData();
 
-      formData.append('schoolName', selectedSchool);
+      formData.append('schoolId', selectedSchool);
       formData.append('className', className);
       formData.append('joinCode', joinCode);
 
@@ -116,7 +117,7 @@ export const CreateClassDialog = ({ open, onClose }: CreateClassProps) => {
     } catch (error) {
       console.error('Błąd przy zapisie klasy: ', error);
     }
-
+    onCreated?.();
     onClose();
   };
   return (
