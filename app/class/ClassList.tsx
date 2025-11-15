@@ -1,11 +1,13 @@
 'use client';
 
 import {
+  Box,
   Button,
   Card,
   CardContent,
   Collapse,
   Container,
+  IconButton,
   Paper,
   Stack,
   Typography,
@@ -15,9 +17,16 @@ import { CreateClassDialog } from './CreateClassDialog';
 import { AssignChildDialog } from './AssignChildDialog';
 import { JoinClassDialog } from './JoinClassDialog';
 import { ClassMembershipRole } from '@prisma/client';
-import { getUserClasses, removeClass } from './actions/actions';
+import { getUserClasses, leaveClass, removeChildFromClass, removeClass } from './actions/actions';
+import Image from 'next/image';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
-type ChildType = { id: string; name: string };
+type ChildType = {
+  id: string;
+  name: string;
+  avatarUrl: string | null;
+  isOwnChild?: boolean;
+};
 
 type ClassType = {
   id: string;
@@ -51,8 +60,20 @@ export const ClassList = () => {
     fetchUserClasses();
   };
 
+  const handleLeaveClass = async (id: string) => {
+    const confirmed = window.confirm('Czy na pewno chcesz opuścić tę klasę?');
+    if (!confirmed) return;
+
+    try {
+      await leaveClass(id);
+    } catch (error) {
+      console.log(error);
+    }
+    refreshUserClasses();
+  };
+
   const handleDeleteClass = async (id: string) => {
-    const confirmed = window.confirm('Czy na pewno chcesz usunąć tę klasę');
+    const confirmed = window.confirm('Czy na pewno chcesz usunąć tę klasę?');
     if (!confirmed) return;
     try {
       await removeClass(id);
@@ -60,6 +81,34 @@ export const ClassList = () => {
       console.error(error);
     }
     refreshUserClasses();
+  };
+
+  const handleRemoveChild = async (childId: string, childName: string, classId: string) => {
+    const confirmed = window.confirm(`Czy na pewno chcesz wypisać ${childName} z tej klasy?`);
+    if (!confirmed) return;
+
+    try {
+      // Zaimportuj i użyj funkcji removeChildFromClass z actions
+      // await removeChildFromClass(childId, classId);
+
+      // Tymczasowe wywołanie - zastąp swoją implementacją
+      const response = await removeChildFromClass(childId, classId);
+      if (!response.succes) {
+        throw new Error('Nie udało się wypisać dziecka z klasy');
+      }
+
+      refreshUserClasses();
+    } catch (error) {
+      console.error('Błąd podczas wypisywania dziecka:', error);
+      alert('Wystąpił błąd podczas wypisywania dziecka z klasy');
+    }
+  };
+
+  const canRemoveChild = (userRole: ClassMembershipRole, isOwnChild: boolean) => {
+    return (
+      (userRole === ClassMembershipRole.PARENT || userRole === ClassMembershipRole.TREASURER) &&
+      isOwnChild
+    );
   };
 
   return (
@@ -106,7 +155,7 @@ export const ClassList = () => {
                   </div>
 
                   <Stack direction="row" spacing={1}>
-                    {cls.userRole === 'TREASURER' && (
+                    {cls.userRole === ClassMembershipRole.TREASURER && (
                       <Button
                         variant="outlined"
                         color="error"
@@ -115,7 +164,15 @@ export const ClassList = () => {
                         Usuń klasę
                       </Button>
                     )}
-
+                    {cls.userRole === ClassMembershipRole.PARENT && (
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        onClick={() => handleLeaveClass(cls.id)}
+                      >
+                        Opuść klasę
+                      </Button>
+                    )}
                     <Button variant="outlined" onClick={() => toggleExpand(cls.id)}>
                       {expandedId === cls.id ? 'Ukryj dzieci' : 'Pokaż dzieci'}
                     </Button>
@@ -126,9 +183,47 @@ export const ClassList = () => {
                   <CardContent sx={{ borderTop: '1px solid #ccc' }}>
                     {cls.children && cls.children.length > 0 ? (
                       cls.children.map((child) => (
-                        <Typography key={child.id} variant="body2">
-                          {child.name}
-                        </Typography>
+                        <Stack
+                          key={child.id}
+                          direction="row"
+                          spacing={1}
+                          alignItems="center"
+                          justifyContent="space-between"
+                          sx={{ mb: 1 }}
+                        >
+                          <Stack direction="row" spacing={1} alignItems="center">
+                            {child.avatarUrl ? (
+                              <Image
+                                src={child.avatarUrl}
+                                alt={child.name}
+                                width={32}
+                                height={32}
+                                style={{ borderRadius: '50%' }}
+                              />
+                            ) : (
+                              <Box
+                                sx={{
+                                  width: 32,
+                                  height: 32,
+                                  borderRadius: '50%',
+                                  bgcolor: 'grey.400',
+                                }}
+                              />
+                            )}
+                            <Typography variant="body2">{child.name}</Typography>
+                          </Stack>
+
+                          {canRemoveChild(cls.userRole, child.isOwnChild ?? false) && (
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => handleRemoveChild(child.id, child.name, cls.id)}
+                              title="Wypisz dziecko z klasy"
+                            >
+                              <DeleteOutlineIcon fontSize="small" />
+                            </IconButton>
+                          )}
+                        </Stack>
                       ))
                     ) : (
                       <Typography variant="body2" color="text.secondary">
@@ -143,9 +238,17 @@ export const ClassList = () => {
         </Stack>
       </Container>
 
-      <CreateClassDialog open={openCreateClass} onClose={() => setOpenCreateClass(false)} />
+      <CreateClassDialog
+        open={openCreateClass}
+        onClose={() => setOpenCreateClass(false)}
+        onCreated={refreshUserClasses}
+      />
       <AssignChildDialog open={openAssignChild} onClose={() => setOpenAssignChild(false)} />
-      <JoinClassDialog open={openJoinClass} onClose={() => setOpenJoinClass(false)} />
+      <JoinClassDialog
+        open={openJoinClass}
+        onClose={() => setOpenJoinClass(false)}
+        onJoined={refreshUserClasses}
+      />
     </>
   );
 };
