@@ -115,23 +115,27 @@ model Class {
   School      School?           @relation(fields: [schoolId], references: [id])
   schoolId    String?
   memberships ClassMembership[]
-  accessCode  String?
+  accessCode  String?           @unique
   isArchived  Boolean           @default(false)
   collections Collection[]
 }
 
 model ClassMembership {
-  id        String              @id @default(uuid())
-  createdAt DateTime            @default(now())
-  class     Class               @relation(fields: [classId], references: [id])
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  class     Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
   classId   String
-  User      User?               @relation(fields: [userId], references: [id])
-  userId    String?
+
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+
   children  Child[]
   userRole  ClassMembershipRole
+
   invitedBy String?
 
-  @@unique([classId])
+  @@unique([userId, classId])
 }
 
 model CollectionAccount {
