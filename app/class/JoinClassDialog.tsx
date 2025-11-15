@@ -11,13 +11,15 @@ import {
   Stack,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
+import { joinClass } from './actions/actions';
 
 type JoinClassDialogProps = {
   open: boolean;
   onClose: () => void;
+  onJoined?: () => void;
 };
 
-export const JoinClassDialog = ({ open, onClose }: JoinClassDialogProps) => {
+export const JoinClassDialog = ({ open, onClose, onJoined }: JoinClassDialogProps) => {
   const [classCode, setClassCode] = useState('');
   const [error, setError] = useState('');
 
@@ -33,28 +35,34 @@ export const JoinClassDialog = ({ open, onClose }: JoinClassDialogProps) => {
     if (value.length !== 13) {
       setError('Kod musi mieć 13 znaków');
       return false;
+    } else {
+      setError('');
+      return true;
     }
   };
 
   const handleClassCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
 
-    if (validateClassCode(value)) {
-      setClassCode(value);
-    }
+    setClassCode(value);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validateClassCode(classCode)) {
       return;
     }
 
+    const result = await joinClass(classCode);
+
+    console.log(result.message);
+    onJoined?.();
     onClose();
   };
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
       <DialogTitle
+        component="div"
         sx={{
           borderBottom: 1,
           borderColor: 'divider',
