@@ -88,10 +88,6 @@ export const ClassList = () => {
     if (!confirmed) return;
 
     try {
-      // Zaimportuj i użyj funkcji removeChildFromClass z actions
-      // await removeChildFromClass(childId, classId);
-
-      // Tymczasowe wywołanie - zastąp swoją implementacją
       const response = await removeChildFromClass(childId, classId);
       if (!response.succes) {
         throw new Error('Nie udało się wypisać dziecka z klasy');
