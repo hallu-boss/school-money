@@ -92,3 +92,73 @@ export const createClass = async (payload: FormData) => {
   console.log(payload);
   return { success: true, message: 'Successfully added class' };
 };
+
+export const getUserClasses = async () => {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error('Unauthorized');
+  }
+
+  const memberships = await db.classMembership.findMany({
+    where: { userId: session.user.id },
+    include: {
+      class: {
+        include: {
+          School: true,
+          memberships: {
+            include: {
+              children: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const classes = memberships.map((m) => {
+    const allChildren = m.class.memberships.flatMap((mem) => mem.children);
+    return {
+      ...m.class,
+      userRole: m.userRole,
+      children: allChildren,
+    };
+  });
+  return classes;
+};
+
+export const removeClass = async (id: string) => {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error('Unauthorized');
+  }
+
+  // const membership = await db.classMembership.findUnique({
+  //   where: { classId_userId: { classId, userId: session.user.id } },
+  // });
+
+  return { succes: true, message: 'Pomyślnie usunięto klasę' };
+};
+
+export const assignChildToClass = async (childId: string, schoolId: string) => {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error('Unauthorized');
+  }
+};
+
+export async function getUserChildren() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error('Unauthorized');
+  }
+
+  const children = await db.child.findMany({
+    where: { userId: session.user.id },
+    select: {
+      id: true,
+      name: true,
+    },
+  });
+
+  return children;
+}

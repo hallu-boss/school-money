@@ -1,4 +1,17 @@
-import { Dialog, DialogContent } from '@mui/material';
+'use client';
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
+} from '@mui/material';
+import { useEffect, useState } from 'react';
+import { getUserChildren } from './actions/actions';
 
 type AssignChildDialogProps = {
   open: boolean;
@@ -6,13 +19,13 @@ type AssignChildDialogProps = {
 };
 
 export const AssignChildDialog = ({ open, onClose }: AssignChildDialogProps) => {
-  const handleClose = () => {
-    onClose();
-  };
+  const [selectedSchool, setSelectedSchool] = useState<string>('');
+  const [selectedClass, setSelectedClass] = useState<string>('');
+  const [selectedChild, setSelectedChild] = useState<string>('');
 
   return (
-    <Dialog open={open} onClose={handleClose}>
-      <DialogContent>Przypisz dziecko</DialogContent>
+    <Dialog open={open} onClose={onClose}>
+      <DialogTitle>Przypisz dziecko do klasy</DialogTitle>
     </Dialog>
   );
 };
