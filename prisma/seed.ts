@@ -1,6 +1,5 @@
 import { ClassMembershipRole, PrismaClient } from '@prisma/client';
 import argon2 from 'argon2';
-import { email } from 'zod';
 
 const prisma = new PrismaClient();
 
@@ -66,16 +65,16 @@ async function createMockClass(
       name,
       createdById,
       schoolId,
-      accessCode
-    }
+      accessCode,
+    },
   });
   await prisma.classMembership.create({
     data: {
       classId: cl.id,
       userId: createdById,
-      userRole: ClassMembershipRole.TREASURER
-    }
-  })
+      userRole: ClassMembershipRole.TREASURER,
+    },
+  });
 }
 
 async function main() {
@@ -97,14 +96,16 @@ async function main() {
   await createMockChild('Julia Wójcik', wojcik.id);
 
   console.log('Tworzenie szkół...');
-  const school1 = await createMockSchool('Szkoła Podstawowa nr 1 im. Marii Skłodowskiej-Curie w Warszawie');
+  const school1 = await createMockSchool(
+    'Szkoła Podstawowa nr 1 im. Marii Skłodowskiej-Curie w Warszawie',
+  );
   await createMockSchool('Szkoła Podstawowa nr 24 z Oddziałami Integracyjnymi w Krakowie');
   await createMockSchool('Szkoła Podstawowa nr 5 im. Henryka Sienkiewicza w Poznaniu');
   await createMockSchool('Szkoła Podstawowa nr 12 z Oddziałami Sportowymi we Wrocławiu');
   await createMockSchool('Szkoła Podstawowa nr 8 im. Jana Pawła II w Gdańsku');
 
   console.log('Tworzenie klas...');
-  await createMockClass('IA', school1.id, kowal.id)
+  await createMockClass('IA', school1.id, kowal.id);
 }
 
 main()
