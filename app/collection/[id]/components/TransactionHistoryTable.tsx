@@ -9,7 +9,7 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import { Transaction } from '../page';
+import { Transaction } from '../actions/actions';
 
 interface TransactionHistoryTableProps {
   transactions: Transaction[];

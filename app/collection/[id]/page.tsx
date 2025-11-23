@@ -8,34 +8,20 @@ import { notFound, redirect } from 'next/navigation';
 import { format } from 'date-fns';
 import path from 'path';
 import { auth } from '@/lib/auth';
+import { Transaction } from './actions/actions';
 
 interface PageProps {
   params: { id: string };
-}
-
-export interface Transaction {
-  id: string;
-  type: 'PAYMENT' | 'WITHDRAWAL';
-  parent: string;
-  child: string;
-  amount: number;
-  date: string;
-  rawDate: Date;
-}
-
-export interface AttachmentProps {
-  id: string;
-  label: string;
 }
 
 export default async function Page({ params }: PageProps) {
   const session = await auth();
   if (!session) redirect('/sign-in');
 
-  const collectionId = params.id;
+  const { id } = await params;
 
   const collection = await db.collection.findUnique({
-    where: { id: collectionId },
+    where: { id: id },
     include: {
       class: {
         include: {
@@ -51,10 +37,30 @@ export default async function Page({ params }: PageProps) {
 
   if (!collection) notFound();
 
+  const membership = collection.class.memberships.find((m) => m.userId === session.user?.id);
+
+  if (!membership) throw new Error('Unauthorized');
+
   const withdrawals = await db.withdrawal.findMany({
-    where: { collectionId: collectionId },
+    where: { collectionId: id },
     include: {
       collectedBy: true,
+    },
+  });
+
+  const payments = await db.payment.findMany({
+    where: { collectionId: id },
+    include: {
+      payer: true,
+      child: true,
+    },
+  });
+
+  const invoices = await db.invoice.findMany({
+    where: { collectionId: id },
+    select: {
+      id: true,
+      fileUrl: true,
     },
   });
 
@@ -67,14 +73,6 @@ export default async function Page({ params }: PageProps) {
     date: format(w.createdAt, 'dd.MM.yyyy HH:mm'),
     rawDate: w.createdAt,
   }));
-
-  const payments = await db.payment.findMany({
-    where: { collectionId: collectionId },
-    include: {
-      payer: true,
-      child: true,
-    },
-  });
 
   const paymentTransactions: Transaction[] = payments.map((p) => ({
     id: p.id,
@@ -90,16 +88,7 @@ export default async function Page({ params }: PageProps) {
     (a, b) => b.rawDate.getTime() - a.rawDate.getTime(),
   );
 
-  // TODO: Zmienić na sprawdzenie roli
-  const isTreasurer = session.user?.id === collection.authorId;
-
-  const invoices = await db.invoice.findMany({
-    where: { collectionId: collectionId },
-    select: {
-      id: true,
-      fileUrl: true,
-    },
-  });
+  const isTreasurer = membership.userRole === 'TREASURER';
 
   const attachmentsList = invoices.map((i) => ({
     id: i.id,
