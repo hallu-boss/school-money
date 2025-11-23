@@ -28,7 +28,7 @@ import {
 import { useState, useTransition } from 'react';
 
 interface CollectionTitleCardProps {
-  coverImage: string;
+  coverImage: string | null;
   title: string;
   start: string;
   end: string;
@@ -93,8 +93,7 @@ export const CollectionTitleCard = ({
     <Card>
       {/* Cover image */}
       <Box position="relative">
-        <CardMedia component="img" height="260" image={coverImage} alt="cover" />
-
+        {coverImage && (<CardMedia component="img" height="260" image={coverImage} alt="cover" />)}
         {editable && (
           <IconButton
             onClick={changeCollectionCover}
