@@ -9,14 +9,7 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-
-interface Transaction {
-  id: string;
-  parent: string;
-  child: string;
-  amount: string;
-  date: string;
-}
+import { Transaction } from '../page';
 
 interface TransactionHistoryTableProps {
   transactions: Transaction[]

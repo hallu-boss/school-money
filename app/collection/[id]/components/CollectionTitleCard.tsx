@@ -26,6 +26,7 @@ import {
   uploadAttachment,
 } from '../actions/actions';
 import { useState, useTransition } from 'react';
+import { AttachmentProps } from '../page';
 
 interface CollectionTitleCardProps {
   coverImage: string | null;
@@ -37,11 +38,6 @@ interface CollectionTitleCardProps {
   description: string;
   attachments: AttachmentProps[];
   editable: boolean;
-}
-
-interface AttachmentProps {
-  id: string;
-  label: string;
 }
 
 export const CollectionTitleCard = ({
