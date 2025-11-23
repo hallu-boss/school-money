@@ -1,26 +1,8 @@
-import React from "react";
-import {
-  Box,
-  Card,
-  CardContent,
-  CardMedia,
-  Typography,
-  LinearProgress,
-  Grid,
-  Avatar,
-  Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Stack,
-  Chip,
-} from "@mui/material";
-import { CollectionTitleCard } from "./components/CollectionTitleCard";
-import { TransactionHistoryTable } from "./components/TransactionHistoryTable";
+import React from 'react';
+import { Box } from '@mui/material';
+import { CollectionTitleCard } from './components/CollectionTitleCard';
+import { TransactionHistoryTable } from './components/TransactionHistoryTable';
+import { UnpaidChildrenGrid } from './components/UnpaidChildrenGrid';
 
 export default function Page() {
   // Mock data
@@ -29,37 +11,37 @@ export default function Page() {
   const progress = (raised / goal) * 100;
 
   const attachments = [
-    { id: "1", label: "Rachunek #1" },
-    { id: "2", label: "Faktura zaliczka" },
+    { id: '1', label: 'Rachunek #1' },
+    { id: '2', label: 'Faktura zaliczka' },
   ];
 
   const transactions = [
     {
-      id: "1",
-      parent: "Jan Kowalski",
-      child: "Adam Kowalski",
-      amount: "20 zł",
-      date: "2025-01-13",
+      id: '1',
+      parent: 'Jan Kowalski',
+      child: 'Adam Kowalski',
+      amount: '20 zł',
+      date: '2025-01-13',
     },
     {
-      id: "2",
-      parent: "Anna Nowak",
-      child: "Adam Kowalski",
-      amount: "50 zł",
-      date: "2025-01-15",
+      id: '2',
+      parent: 'Anna Nowak',
+      child: 'Adam Kowalski',
+      amount: '50 zł',
+      date: '2025-01-15',
     },
     {
-      id: "3",
-      parent: "Skarbnik",
-      child: "-",
-      amount: "-80 zł (pobranie)",
-      date: "2025-01-18",
+      id: '3',
+      parent: 'Skarbnik',
+      child: '-',
+      amount: '-80 zł (pobranie)',
+      date: '2025-01-18',
     },
   ];
 
   const unpaidChildren = [
-    { id: 1, name: "Kasia Wójcik", avatar: "" },
-    { id: 2, name: "Marek Lewandowski", avatar: "" },
+    { id: '1', name: 'Kasia Wójcik', avatarUrl: '' },
+    { id: '2', name: 'Marek Lewandowski', avatarUrl: '' },
   ];
 
   return (
@@ -70,35 +52,18 @@ export default function Page() {
         title="Wyjście do Kina"
         start="01.11.2025"
         end="11.11.2025"
-        raised={320.00}
-        goal={500.00}
+        raised={320.0}
+        goal={500.0}
         description="Zbiórka na wycieczkę szkolną do kina. Środki zostaną przeznaczone na transport, bilety wstępu i posiłki."
         attachments={attachments}
         editable={false}
       />
 
       {/* Transaction History */}
-      <TransactionHistoryTable 
-        transactions={transactions}
-      />
+      <TransactionHistoryTable transactions={transactions} />
 
       {/* Unpaid children */}
-      <Box>
-        <Typography variant="h5" fontWeight="bold" gutterBottom>
-          Dzieci bez wpłat
-        </Typography>
-        <Grid container spacing={2}>
-          {unpaidChildren.map((child) => (
-            <Grid size={6} key={child.id}>
-              <Paper style={{ padding: 12, display: "flex", alignItems: "center", gap: 16 }}>
-                <Avatar src={child.avatar} />
-                <Typography flexGrow={1}>{child.name}</Typography>
-                <Button variant="contained">Zapłać</Button>
-              </Paper>
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
+      <UnpaidChildrenGrid unpaidChildren={unpaidChildren} />
     </Box>
   );
 }
