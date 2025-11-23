@@ -12,12 +12,10 @@ import {
 import { Transaction } from '../page';
 
 interface TransactionHistoryTableProps {
-  transactions: Transaction[]
+  transactions: Transaction[];
 }
 
-export const TransactionHistoryTable = ({
-  transactions
-}: TransactionHistoryTableProps) => {
+export const TransactionHistoryTable = ({ transactions }: TransactionHistoryTableProps) => {
   return (
     <Box>
       <Typography variant="h5" fontWeight="bold" gutterBottom>

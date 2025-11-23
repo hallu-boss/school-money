@@ -1,11 +1,11 @@
-export const changeCollectionCover = () => {}
+export const changeCollectionCover = () => {};
 
-export const updateCollectionDescription = (newDescription: string) => {}
+export const updateCollectionDescription = (newDescription: string) => {};
 
-export const updateCollectionTitle = (newTitle: string) => {}
+export const updateCollectionTitle = (newTitle: string) => {};
 
-export const deleteAttachment = () => {}
+export const deleteAttachment = () => {};
 
-export const downloadAttachment = () => {}
+export const downloadAttachment = () => {};
 
-export const uploadAttachment = () => {}
+export const uploadAttachment = () => {};

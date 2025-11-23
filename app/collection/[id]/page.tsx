@@ -15,7 +15,7 @@ interface PageProps {
 
 export interface Transaction {
   id: string;
-  type: "PAYMENT" | "WITHDRAWAL";
+  type: 'PAYMENT' | 'WITHDRAWAL';
   parent: string;
   child: string;
   amount: number;
@@ -65,7 +65,7 @@ export default async function Page({ params }: PageProps) {
     child: '-',
     amount: -Number(w.amount),
     date: format(w.createdAt, 'dd.MM.yyyy HH:mm'),
-    rawDate: w.createdAt
+    rawDate: w.createdAt,
   }));
 
   const payments = await db.payment.findMany({
@@ -83,7 +83,7 @@ export default async function Page({ params }: PageProps) {
     child: p.child.name,
     amount: Number(p.amount),
     date: format(p.paidAt, 'dd.MM.yyyy HH:mm'),
-    rawDate: p.paidAt
+    rawDate: p.paidAt,
   }));
 
   const transactions = [...paymentTransactions, ...withdrawalTransactions].sort(
@@ -106,7 +106,7 @@ export default async function Page({ params }: PageProps) {
     label: path.basename(i.fileUrl),
   }));
 
-  const allChildren = collection.class.memberships.flatMap(m => m.children);
+  const allChildren = collection.class.memberships.flatMap((m) => m.children);
 
   const costPerChild = Number(collection.amountPerChild);
   const childrenCount = allChildren.length;
@@ -114,7 +114,7 @@ export default async function Page({ params }: PageProps) {
   const raised = payments.length * costPerChild;
   const goal = childrenCount * costPerChild;
 
-  const paidChildIds = new Set(payments.map(p => p.childId));
+  const paidChildIds = new Set(payments.map((p) => p.childId));
 
   const unpaidChildren = allChildren
     .filter((child) => !paidChildIds.has(child.id))

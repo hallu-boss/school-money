@@ -89,7 +89,7 @@ export const CollectionTitleCard = ({
     <Card>
       {/* Cover image */}
       <Box position="relative">
-        {coverImage && (<CardMedia component="img" height="260" image={coverImage} alt="cover" />)}
+        {coverImage && <CardMedia component="img" height="260" image={coverImage} alt="cover" />}
         {editable && (
           <IconButton
             onClick={changeCollectionCover}

@@ -147,24 +147,35 @@ async function createMockClassWithMembers(
   return cl;
 }
 
-
 async function main() {
   console.log('Czyszczenie istniejących danych...');
   await clearDB();
 
   console.log('Tworzenie użytkowników...');
-  const u_jan_kowalski      = await createMockUser('Jan Kowalski', 'jan.kowalski@example.com');
-  const u_anna_nowak        = await createMockUser('Anna Nowak', 'anna.nowak@example.com');
-  const u_piotr_wisniewski  = await createMockUser( 'Piotr Wiśniewski', 'piotr.wisniewski@example.com');
-  const u_maria_lewandowska = await createMockUser( 'Maria Lewandowska', 'maria.lewandowska@example.com');
-  const u_krzysztof_wojcik  = await createMockUser( 'Krzysztof Wójcik', 'krzysztof.wojcik@example.com');
+  const u_jan_kowalski = await createMockUser('Jan Kowalski', 'jan.kowalski@example.com');
+  const u_anna_nowak = await createMockUser('Anna Nowak', 'anna.nowak@example.com');
+  const u_piotr_wisniewski = await createMockUser(
+    'Piotr Wiśniewski',
+    'piotr.wisniewski@example.com',
+  );
+  const u_maria_lewandowska = await createMockUser(
+    'Maria Lewandowska',
+    'maria.lewandowska@example.com',
+  );
+  const u_krzysztof_wojcik = await createMockUser(
+    'Krzysztof Wójcik',
+    'krzysztof.wojcik@example.com',
+  );
 
   console.log('Tworzenie dzieci...');
-  const d_kasia_kowalska         = await createMockChild('Kasia Kowalska', u_jan_kowalski.id);
-  const d_michal_nowak           = await createMockChild('Michał Nowak', u_anna_nowak.id);
-  const d_zuzia_wisniewska       = await createMockChild('Zuzia Wiśniewska', u_piotr_wisniewski.id);
-  const d_aleksander_lewandowski = await createMockChild('Aleksander Lewandowski', u_maria_lewandowska.id);
-  const d_julia_wójcik           = await createMockChild('Julia Wójcik', u_krzysztof_wojcik.id);
+  const d_kasia_kowalska = await createMockChild('Kasia Kowalska', u_jan_kowalski.id);
+  const d_michal_nowak = await createMockChild('Michał Nowak', u_anna_nowak.id);
+  const d_zuzia_wisniewska = await createMockChild('Zuzia Wiśniewska', u_piotr_wisniewski.id);
+  const d_aleksander_lewandowski = await createMockChild(
+    'Aleksander Lewandowski',
+    u_maria_lewandowska.id,
+  );
+  const d_julia_wójcik = await createMockChild('Julia Wójcik', u_krzysztof_wojcik.id);
 
   console.log('Tworzenie szkół...');
   const school1 = await createMockSchool(
@@ -177,16 +188,12 @@ async function main() {
 
   console.log('Tworzenie klasy IA i dodawanie wszystkich userów + dzieci...');
 
-  const school1Class = await createMockClassWithMembers(
-    'IA', 
-    school1.id, 
-    u_jan_kowalski.id, 
-    [
-      { userId: u_anna_nowak.id, children: [d_michal_nowak] },
-      { userId: u_piotr_wisniewski.id, children: [d_zuzia_wisniewska] },
-      { userId: u_maria_lewandowska.id, children: [d_aleksander_lewandowski] },
-      { userId: u_krzysztof_wojcik.id, children: [d_julia_wójcik] },
-      { userId: u_jan_kowalski.id, children: [d_kasia_kowalska] },
+  const school1Class = await createMockClassWithMembers('IA', school1.id, u_jan_kowalski.id, [
+    { userId: u_anna_nowak.id, children: [d_michal_nowak] },
+    { userId: u_piotr_wisniewski.id, children: [d_zuzia_wisniewska] },
+    { userId: u_maria_lewandowska.id, children: [d_aleksander_lewandowski] },
+    { userId: u_krzysztof_wojcik.id, children: [d_julia_wójcik] },
+    { userId: u_jan_kowalski.id, children: [d_kasia_kowalska] },
   ]);
 
   console.log('Tworzenie przykładowej zbiórki...');
