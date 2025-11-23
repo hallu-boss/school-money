@@ -20,6 +20,7 @@ import {
   Chip,
 } from "@mui/material";
 import { CollectionTitleCard } from "./components/CollectionTitleCard";
+import { TransactionHistoryTable } from "./components/TransactionHistoryTable";
 
 export default function Page() {
   // Mock data
@@ -34,21 +35,21 @@ export default function Page() {
 
   const transactions = [
     {
-      id: 1,
+      id: "1",
       parent: "Jan Kowalski",
       child: "Adam Kowalski",
       amount: "20 zł",
       date: "2025-01-13",
     },
     {
-      id: 2,
+      id: "2",
       parent: "Anna Nowak",
       child: "Adam Kowalski",
       amount: "50 zł",
       date: "2025-01-15",
     },
     {
-      id: 3,
+      id: "3",
       parent: "Skarbnik",
       child: "-",
       amount: "-80 zł (pobranie)",
@@ -77,33 +78,9 @@ export default function Page() {
       />
 
       {/* Transaction History */}
-      <Box>
-        <Typography variant="h5" fontWeight="bold" gutterBottom>
-          Historia transakcji
-        </Typography>
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Rodzic</TableCell>
-                <TableCell>Dziecko</TableCell>
-                <TableCell>Kwota</TableCell>
-                <TableCell>Data</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {transactions.map((t) => (
-                <TableRow key={t.id}>
-                  <TableCell>{t.parent}</TableCell>
-                  <TableCell>{t.child}</TableCell>
-                  <TableCell>{t.amount}</TableCell>
-                  <TableCell>{t.date}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Box>
+      <TransactionHistoryTable 
+        transactions={transactions}
+      />
 
       {/* Unpaid children */}
       <Box>
