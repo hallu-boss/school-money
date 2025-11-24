@@ -20,7 +20,6 @@ import { EditChildDialog } from './EditChildDialog';
 export type ChildWithRelations = Prisma.ChildGetPayload<{
   include: {
     membership: { include: { class: { include: { School: true } } } };
-    Payment: true;
   };
 }>;
 
