@@ -37,7 +37,7 @@ async function createMockUser(name: string, email: string, image: string | null 
 }
 
 async function createMockChild(name: string, parentId: string, avatarUrl: string | null = null) {
-  await prisma.child.create({
+  return await prisma.child.create({
     data: {
       name,
       userId: parentId,
@@ -54,12 +54,47 @@ async function createMockSchool(name: string) {
   });
 }
 
-async function createMockClass(
+async function createMockCollection(
+  title: string,
+  classId: string,
+  authorId: string,
+  amountPerChild: number,
+  coverUrl?: string | null,
+  description?: string | null,
+) {
+  ibanSuffix += 1;
+
+  const collection = await prisma.collection.create({
+    data: {
+      title,
+      description,
+      coverUrl,
+      startAt: new Date(), // start teraz
+      endAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // +7 dni
+      classId,
+      authorId,
+      amountPerChild,
+      isClosed: false,
+      account: {
+        create: {
+          iban: `PL66109010140000010203045${ibanSuffix.toString().padStart(2, '0')}`,
+          balance: 0,
+        },
+      },
+    },
+  });
+
+  return collection;
+}
+
+async function createMockClassWithMembers(
   name: string,
   schoolId: string,
   createdById: string,
+  users: { userId: string; children: { id: string }[] }[],
   accessCode: string = 'AAAAAAAAAA',
 ) {
+  // Utwórz klasę
   const cl = await prisma.class.create({
     data: {
       name,
@@ -68,13 +103,48 @@ async function createMockClass(
       accessCode,
     },
   });
-  await prisma.classMembership.create({
+
+  // Skarbnik klasy
+  const treasurerMembership = await prisma.classMembership.create({
     data: {
       classId: cl.id,
       userId: createdById,
       userRole: ClassMembershipRole.TREASURER,
     },
   });
+
+  // Dodaj dzieci skarbnika
+  const treasurerEntry = users.find((u) => u.userId === createdById);
+  if (treasurerEntry) {
+    for (const child of treasurerEntry.children) {
+      await prisma.child.update({
+        where: { id: child.id },
+        data: { membershipId: treasurerMembership.id },
+      });
+    }
+  }
+
+  // Dodaj pozostałych userów jako PARENT
+  for (const u of users) {
+    if (u.userId === createdById) continue; // pomiń skarbnika
+
+    const membership = await prisma.classMembership.create({
+      data: {
+        classId: cl.id,
+        userId: u.userId,
+        userRole: ClassMembershipRole.PARENT,
+      },
+    });
+
+    for (const child of u.children) {
+      await prisma.child.update({
+        where: { id: child.id },
+        data: { membershipId: membership.id },
+      });
+    }
+  }
+
+  return cl;
 }
 
 async function main() {
@@ -82,18 +152,30 @@ async function main() {
   await clearDB();
 
   console.log('Tworzenie użytkowników...');
-  const kowal = await createMockUser('Jan Kowalski', 'jan.kowalski@example.com');
-  const nowak = await createMockUser('Anna Nowak', 'anna.nowak@example.com');
-  const wisnia = await createMockUser('Piotr Wiśniewski', 'piotr.wisniewski@example.com');
-  const lewy = await createMockUser('Maria Lewandowska', 'maria.lewandowska@example.com');
-  const wojcik = await createMockUser('Krzysztof Wójcik', 'krzysztof.wojcik@example.com');
+  const u_jan_kowalski = await createMockUser('Jan Kowalski', 'jan.kowalski@example.com');
+  const u_anna_nowak = await createMockUser('Anna Nowak', 'anna.nowak@example.com');
+  const u_piotr_wisniewski = await createMockUser(
+    'Piotr Wiśniewski',
+    'piotr.wisniewski@example.com',
+  );
+  const u_maria_lewandowska = await createMockUser(
+    'Maria Lewandowska',
+    'maria.lewandowska@example.com',
+  );
+  const u_krzysztof_wojcik = await createMockUser(
+    'Krzysztof Wójcik',
+    'krzysztof.wojcik@example.com',
+  );
 
   console.log('Tworzenie dzieci...');
-  await createMockChild('Kasia Kowalska', kowal.id);
-  await createMockChild('Michał Nowak', nowak.id);
-  await createMockChild('Zuzia Wiśniewska', wisnia.id);
-  await createMockChild('Aleksander Lewandowski', lewy.id);
-  await createMockChild('Julia Wójcik', wojcik.id);
+  const d_kasia_kowalska = await createMockChild('Kasia Kowalska', u_jan_kowalski.id);
+  const d_michal_nowak = await createMockChild('Michał Nowak', u_anna_nowak.id);
+  const d_zuzia_wisniewska = await createMockChild('Zuzia Wiśniewska', u_piotr_wisniewski.id);
+  const d_aleksander_lewandowski = await createMockChild(
+    'Aleksander Lewandowski',
+    u_maria_lewandowska.id,
+  );
+  const d_julia_wójcik = await createMockChild('Julia Wójcik', u_krzysztof_wojcik.id);
 
   console.log('Tworzenie szkół...');
   const school1 = await createMockSchool(
@@ -104,8 +186,25 @@ async function main() {
   await createMockSchool('Szkoła Podstawowa nr 12 z Oddziałami Sportowymi we Wrocławiu');
   await createMockSchool('Szkoła Podstawowa nr 8 im. Jana Pawła II w Gdańsku');
 
-  console.log('Tworzenie klas...');
-  await createMockClass('IA', school1.id, kowal.id);
+  console.log('Tworzenie klasy IA i dodawanie wszystkich userów + dzieci...');
+
+  const school1Class = await createMockClassWithMembers('IA', school1.id, u_jan_kowalski.id, [
+    { userId: u_anna_nowak.id, children: [d_michal_nowak] },
+    { userId: u_piotr_wisniewski.id, children: [d_zuzia_wisniewska] },
+    { userId: u_maria_lewandowska.id, children: [d_aleksander_lewandowski] },
+    { userId: u_krzysztof_wojcik.id, children: [d_julia_wójcik] },
+    { userId: u_jan_kowalski.id, children: [d_kasia_kowalska] },
+  ]);
+
+  console.log('Tworzenie przykładowej zbiórki...');
+  await createMockCollection(
+    'Składka na wycieczkę do Torunia',
+    school1Class.id,
+    u_jan_kowalski.id,
+    50.0,
+    'https://gfx.chillizet.pl/var/g3-chillizet-2/storage/images/podroze/torun-na-weekend-10-najwiekszych-atrakcji-tego-miasta/21993551-1-pol-PL/To-najstarsze-miasto-w-Polsce.-Stad-pochodzi-Tony-Halik-i-Zbigniew-Herbert_content.jpg',
+    'Zbiórka na jednodniową wycieczkę klasową.',
+  );
 }
 
 main()
