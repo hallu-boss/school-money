@@ -4,9 +4,8 @@ import argon2 from 'argon2';
 const prisma = new PrismaClient();
 
 async function clearDB() {
-  await prisma.withdrawal.deleteMany();
+  await prisma.transaction.deleteMany();
   await prisma.invoice.deleteMany();
-  await prisma.payment.deleteMany();
   await prisma.collectionAccount.deleteMany();
   await prisma.collection.deleteMany();
   await prisma.child.deleteMany();
