@@ -147,7 +147,7 @@ export async function getUserChildren() {
           class: { include: { School: true } },
         },
       },
-      Payment: true,
+      transactions: true,
     },
   });
 
@@ -226,7 +226,7 @@ export async function abortChild(childId: string) {
 
   const child = await db.child.findUnique({
     where: { id: childId },
-    include: { Payment: true },
+    include: { transactions: true },
   });
 
   if (!child) {
@@ -239,7 +239,7 @@ export async function abortChild(childId: string) {
   }
 
   // jeśli dzieciak ma przypisane płątności - blokujemy usunięcie
-  if (child.Payment.length > 0) {
+  if (child.transactions.length > 0) {
     //TODO: Dodanie obsługi tych błędów do UI
     throw new Error('Cannot delete child with existing payments');
   }

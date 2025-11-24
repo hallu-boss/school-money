@@ -1,13 +1,3 @@
-export interface Transaction {
-  id: string;
-  type: 'PAYMENT' | 'WITHDRAWAL';
-  parent: string;
-  child: string;
-  amount: number;
-  date: string;
-  rawDate: Date;
-}
-
 export interface AttachmentProps {
   id: string;
   label: string;
