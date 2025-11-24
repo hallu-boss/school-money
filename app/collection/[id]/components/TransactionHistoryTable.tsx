@@ -9,10 +9,17 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import { Transaction } from '../actions/actions';
+
+export interface TransactionHistoryRow {
+  id: string;
+  user: string;
+  desc: string;
+  amount: number;
+  date: string;
+}
 
 interface TransactionHistoryTableProps {
-  transactions: Transaction[];
+  transactions: TransactionHistoryRow[];
 }
 
 export const TransactionHistoryTable = ({ transactions }: TransactionHistoryTableProps) => {
@@ -34,8 +41,8 @@ export const TransactionHistoryTable = ({ transactions }: TransactionHistoryTabl
           <TableBody>
             {transactions.map((t) => (
               <TableRow key={t.id}>
-                <TableCell>{t.parent}</TableCell>
-                <TableCell>{t.child}</TableCell>
+                <TableCell>{t.user}</TableCell>
+                <TableCell>{t.desc}</TableCell>
                 <TableCell>{t.amount}</TableCell>
                 <TableCell>{t.date}</TableCell>
               </TableRow>

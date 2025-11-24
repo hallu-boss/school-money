@@ -1,15 +1,16 @@
 import React from 'react';
-import { Box } from '@mui/material';
+import { Box, Button } from '@mui/material';
 import { CollectionTitleCard } from './components/CollectionTitleCard';
-import { TransactionHistoryTable } from './components/TransactionHistoryTable';
+import {
+  TransactionHistoryRow,
+  TransactionHistoryTable,
+} from './components/TransactionHistoryTable';
 import { UnpaidChildrenGrid } from './components/UnpaidChildrenGrid';
 import db from '@/lib/db';
 import { notFound, redirect } from 'next/navigation';
 import { format } from 'date-fns';
 import path from 'path';
 import { auth } from '@/lib/auth';
-import { Transaction } from './actions/actions';
-
 interface PageProps {
   params: { id: string };
 }
@@ -41,20 +42,7 @@ export default async function Page({ params }: PageProps) {
 
   if (!membership) throw new Error('Unauthorized');
 
-  const withdrawals = await db.withdrawal.findMany({
-    where: { collectionId: id },
-    include: {
-      collectedBy: true,
-    },
-  });
-
-  const payments = await db.payment.findMany({
-    where: { collectionId: id },
-    include: {
-      payer: true,
-      child: true,
-    },
-  });
+  const isTreasurer = membership.userRole === 'TREASURER';
 
   const invoices = await db.invoice.findMany({
     where: { collectionId: id },
@@ -64,31 +52,14 @@ export default async function Page({ params }: PageProps) {
     },
   });
 
-  const withdrawalTransactions: Transaction[] = withdrawals.map((w) => ({
-    id: w.id,
-    type: 'WITHDRAWAL',
-    parent: w.collectedBy.name || 'Skarbnik',
-    child: '-',
-    amount: -Number(w.amount),
-    date: format(w.createdAt, 'dd.MM.yyyy HH:mm'),
-    rawDate: w.createdAt,
-  }));
-
-  const paymentTransactions: Transaction[] = payments.map((p) => ({
-    id: p.id,
-    type: 'PAYMENT',
-    parent: p.payer.name || 'Rodzic',
-    child: p.child.name,
-    amount: Number(p.amount),
-    date: format(p.paidAt, 'dd.MM.yyyy HH:mm'),
-    rawDate: p.paidAt,
-  }));
-
-  const transactions = [...paymentTransactions, ...withdrawalTransactions].sort(
-    (a, b) => b.rawDate.getTime() - a.rawDate.getTime(),
-  );
-
-  const isTreasurer = membership.userRole === 'TREASURER';
+  const transactions = await db.transaction.findMany({
+    where: { collectionId: id },
+    orderBy: { createdAt: 'desc' },
+    include: {
+      user: true,
+      child: true,
+    },
+  });
 
   const attachmentsList = invoices.map((i) => ({
     id: i.id,
@@ -100,13 +71,14 @@ export default async function Page({ params }: PageProps) {
   const costPerChild = Number(collection.amountPerChild);
   const childrenCount = allChildren.length;
 
-  const raised = payments.length * costPerChild;
+  const paymentTransactions = transactions.filter((t) => t.type === 'PAYMENT' && t.childId);
+  const uniqueChildIds = Array.from(new Set(paymentTransactions.map((t) => t.childId)));
+
+  const raised = uniqueChildIds.length * costPerChild;
   const goal = childrenCount * costPerChild;
 
-  const paidChildIds = new Set(payments.map((p) => p.childId));
-
   const unpaidChildren = allChildren
-    .filter((child) => !paidChildIds.has(child.id))
+    .filter((child) => !uniqueChildIds.includes(child.id))
     .map((child) => ({
       id: child.id,
       name: child.name,
@@ -115,6 +87,22 @@ export default async function Page({ params }: PageProps) {
 
   return (
     <Box p={4} maxWidth={900} margin="auto" display="flex" flexDirection="column" gap={4}>
+      {isTreasurer && (
+        <Box display="flex" justifyContent="flex-end" gap={2}>
+          <Button variant="outlined" color="primary">
+            Wypłać pieniądze
+          </Button>
+
+          <Button variant="outlined" color="error">
+            Zamknij zbiórkę
+          </Button>
+
+          <Button variant="outlined" color="primary">
+            Wpłać pieniądze
+          </Button>
+        </Box>
+      )}
+
       {/* Header + Cover */}
       <CollectionTitleCard
         coverImage={collection.coverUrl}
@@ -129,7 +117,17 @@ export default async function Page({ params }: PageProps) {
       />
 
       {/* Transaction History */}
-      <TransactionHistoryTable transactions={transactions} />
+      <TransactionHistoryTable
+        transactions={transactions.map(
+          (t): TransactionHistoryRow => ({
+            id: t.id,
+            user: t.user.name ?? 'Unnamed',
+            desc: t.title,
+            amount: Number(t.amount) * (t.type === 'WITHDRAWAL' ? -1 : 1),
+            date: format(t.createdAt, 'dd.MM.yyyy HH:mm'),
+          }),
+        )}
+      />
 
       {/* Unpaid children */}
       <UnpaidChildrenGrid unpaidChildren={unpaidChildren} />
