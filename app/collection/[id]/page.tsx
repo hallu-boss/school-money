@@ -5,7 +5,7 @@ import {
   TransactionHistoryRow,
   TransactionHistoryTable,
 } from './components/TransactionHistoryTable';
-import { UnpaidChildrenGrid } from './components/UnpaidChildrenGrid';
+import { ChildData, ChildrenGrid, ChildStatus } from './components/ChildrenGrid';
 import db from '@/lib/db';
 import { notFound, redirect } from 'next/navigation';
 import { format } from 'date-fns';
@@ -26,11 +26,7 @@ export default async function Page({ params }: PageProps) {
     include: {
       class: {
         include: {
-          memberships: {
-            include: {
-              children: true,
-            },
-          },
+          memberships: true
         },
       },
     },
@@ -61,29 +57,28 @@ export default async function Page({ params }: PageProps) {
     },
   });
 
+  const participants = await db.collectionParticipant.findMany({
+    where: { collectionId: id },
+    include: {
+      child: true,
+      payments: { orderBy: { createdAt: 'asc' } },
+    },
+  });
+
   const attachmentsList = invoices.map((i) => ({
     id: i.id,
     label: path.basename(i.fileUrl),
   }));
 
-  const allChildren = collection.class.memberships.flatMap((m) => m.children);
+  const allChildren = participants.filter((p) => p.isActive).map((p) => p.child);
 
   const costPerChild = Number(collection.amountPerChild);
   const childrenCount = allChildren.length;
 
-  const paymentTransactions = transactions.filter((t) => t.type === 'PAYMENT' && t.childId);
-  const uniqueChildIds = Array.from(new Set(paymentTransactions.map((t) => t.childId)));
+  const numOfPayments = participants.map((p) => p.payments[p.payments.length - 1]).filter((p) => p?.status === "COMPLETED").length;
 
-  const raised = uniqueChildIds.length * costPerChild;
+  const raised = numOfPayments * costPerChild;
   const goal = childrenCount * costPerChild;
-
-  const unpaidChildren = allChildren
-    .filter((child) => !uniqueChildIds.includes(child.id))
-    .map((child) => ({
-      id: child.id,
-      name: child.name,
-      avatarUrl: child.avatarUrl || '',
-    }));
 
   return (
     <Box p={4} maxWidth={900} margin="auto" display="flex" flexDirection="column" gap={4}>
@@ -130,7 +125,20 @@ export default async function Page({ params }: PageProps) {
       />
 
       {/* Unpaid children */}
-      <UnpaidChildrenGrid unpaidChildren={unpaidChildren} />
+      <ChildrenGrid
+        childrenData={participants.map((p): ChildData => {
+          const lastPayment = p.payments[p.payments.length - 1];
+          const status: ChildStatus = !p.isActive
+            ? 'SIGNED_OFF'
+            : lastPayment?.status === 'COMPLETED'
+              ? 'PAID'
+              : 'UNPAID';
+          return {
+            ...p.child,
+            status,
+          };
+        })}
+      />
     </Box>
   );
 }
