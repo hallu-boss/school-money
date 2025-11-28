@@ -6,13 +6,13 @@ export type ChildStatus = "UNPAID" | "PAID" | "SIGNED_OFF";
 export type ChildData = Pick<Child, 'id' | 'name' | 'avatarUrl'> & { status: ChildStatus };
 
 interface ChildrenGridProps {
-  childrenData: ChildData[];
+  childrenGridData: ChildData[];
 }
 
-export const ChildrenGrid = ({ childrenData }: ChildrenGridProps) => {
-  const unpaid = childrenData.filter(c => c.status === "UNPAID");
-  const paid = childrenData.filter(c => c.status === "PAID");
-  const signedOff = childrenData.filter(c => c.status === "SIGNED_OFF");
+export const ChildrenGrid = ({ childrenGridData }: ChildrenGridProps) => {
+  const unpaid = childrenGridData.filter(c => c.status === "UNPAID");
+  const paid = childrenGridData.filter(c => c.status === "PAID");
+  const signedOff = childrenGridData.filter(c => c.status === "SIGNED_OFF");
 
   const renderChild = (child: ChildData, action?: React.ReactNode, faded?: boolean) => (
     <Grid size={6} key={child.id}>

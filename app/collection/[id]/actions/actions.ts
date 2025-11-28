@@ -1,7 +1,3 @@
-export interface AttachmentProps {
-  id: string;
-  label: string;
-}
 
 export const changeCollectionCover = () => {};
 
@@ -14,3 +10,8 @@ export const deleteAttachment = () => {};
 export const downloadAttachment = () => {};
 
 export const uploadAttachment = () => {};
+
+export const withdrawFromCollection = (fromCollectionId: string, toAccountId: string, amount: number) => {};
+
+export const closeCollection = (collectionId: string) => {};
+

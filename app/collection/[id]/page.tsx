@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Button } from '@mui/material';
+import { Box } from '@mui/material';
 import { CollectionTitleCard } from './components/CollectionTitleCard';
 import {
   TransactionHistoryRow,
@@ -11,6 +11,7 @@ import { notFound, redirect } from 'next/navigation';
 import { format } from 'date-fns';
 import path from 'path';
 import { auth } from '@/lib/auth';
+import { TreasurerActionButtonsRow } from './components/TreasurerActionButtonsRow';
 interface PageProps {
   params: { id: string };
 }
@@ -23,29 +24,21 @@ export default async function Page({ params }: PageProps) {
 
   const collection = await db.collection.findUnique({
     where: { id: id },
-    include: {
-      class: {
-        include: {
-          memberships: true
-        },
-      },
-    },
   });
 
   if (!collection) notFound();
 
-  const membership = collection.class.memberships.find((m) => m.userId === session.user?.id);
+  const membership = await db.classMembership.findFirst({
+    where: {
+      classId: id,
+      userId: session.user?.id,
+    },
+  });
 
   if (!membership) throw new Error('Unauthorized');
 
-  const isTreasurer = membership.userRole === 'TREASURER';
-
   const invoices = await db.invoice.findMany({
     where: { collectionId: id },
-    select: {
-      id: true,
-      fileUrl: true,
-    },
   });
 
   const transactions = await db.transaction.findMany({
@@ -65,38 +58,26 @@ export default async function Page({ params }: PageProps) {
     },
   });
 
-  const attachmentsList = invoices.map((i) => ({
-    id: i.id,
-    label: path.basename(i.fileUrl),
-  }));
+  const getRaisedAndGoalAmount = () => {
+    const costPerChild = Number(collection.amountPerChild);
+    const childrenCount = participants.filter((p) => p.isActive).length;
+    const numOfPayments = participants
+      .map((p) => p.payments[p.payments.length - 1])
+      .filter((p) => p?.status === 'COMPLETED').length;
 
-  const allChildren = participants.filter((p) => p.isActive).map((p) => p.child);
+    const raised = costPerChild * numOfPayments;
+    const goal = costPerChild * childrenCount;
 
-  const costPerChild = Number(collection.amountPerChild);
-  const childrenCount = allChildren.length;
+    return { raised, goal };
+  };
 
-  const numOfPayments = participants.map((p) => p.payments[p.payments.length - 1]).filter((p) => p?.status === "COMPLETED").length;
+  const { raised, goal } = getRaisedAndGoalAmount();
 
-  const raised = numOfPayments * costPerChild;
-  const goal = childrenCount * costPerChild;
+  const isTreasurer = membership.userRole === 'TREASURER';
 
   return (
     <Box p={4} maxWidth={900} margin="auto" display="flex" flexDirection="column" gap={4}>
-      {isTreasurer && (
-        <Box display="flex" justifyContent="flex-end" gap={2}>
-          <Button variant="outlined" color="primary">
-            Wypłać pieniądze
-          </Button>
-
-          <Button variant="outlined" color="error">
-            Zamknij zbiórkę
-          </Button>
-
-          <Button variant="outlined" color="primary">
-            Wpłać pieniądze
-          </Button>
-        </Box>
-      )}
+      {isTreasurer && <TreasurerActionButtonsRow />}
 
       {/* Header + Cover */}
       <CollectionTitleCard
@@ -107,7 +88,10 @@ export default async function Page({ params }: PageProps) {
         raised={raised}
         goal={goal}
         description={collection.description ? collection.description : ''}
-        attachments={attachmentsList}
+        attachments={invoices.map((i) => ({
+          ...i,
+          label: path.basename(i.fileUrl),
+        }))}
         editable={isTreasurer}
       />
 
@@ -126,7 +110,7 @@ export default async function Page({ params }: PageProps) {
 
       {/* Unpaid children */}
       <ChildrenGrid
-        childrenData={participants.map((p): ChildData => {
+        childrenGridData={participants.map((p): ChildData => {
           const lastPayment = p.payments[p.payments.length - 1];
           const status: ChildStatus = !p.isActive
             ? 'SIGNED_OFF'
