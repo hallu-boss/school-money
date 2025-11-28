@@ -176,7 +176,7 @@ export async function getUserChildren() {
   }
 
   const children = await db.child.findMany({
-    where: { userId: session.user.id },
+    where: { parentId: session.user.id },
     select: {
       id: true,
       name: true,
