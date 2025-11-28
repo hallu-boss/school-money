@@ -180,6 +180,21 @@ async function createMockCollection(
     data: { bankAccountId: bankAccount.id },
   });
 
+  const children = await prisma.child.findMany({
+    where: { membership: { classId } },
+  });
+
+  await Promise.all(
+    children.map((child) =>
+      prisma.collectionParticipant.create({
+        data: {
+          childId: child.id,
+          collectionId: collection.id,
+        },
+      }),
+    ),
+  );
+
   return collection;
 }
 
