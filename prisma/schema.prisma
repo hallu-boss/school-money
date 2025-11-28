@@ -75,6 +75,8 @@ model User {
   image         String?
  
   bankAccount        BankAccount?
+  bankAccountId      String? @unique
+
   children           Child[]
   memberships        ClassMembership[]
   createdCollections Collection[]
@@ -233,8 +235,8 @@ model Collection {
   author         User               @relation(fields: [authorId], references: [id])
   authorId       String
   
-  account        BankAccount?
-  accountId      String?
+  bankAccount        BankAccount?
+  bankAccountId      String?
 
   invoices       Invoice[]
   transactions   Transaction[]
