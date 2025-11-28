@@ -2,13 +2,13 @@
 
 import { useState } from 'react';
 import { Avatar, Box, Paper, Typography, Stack, Button } from '@mui/material';
-import { User } from '@prisma/client';
+import { BankAccount, User } from '@prisma/client';
 import { EditProfileDialog } from './EditProfileDialog';
 
 import EditIcon from '@mui/icons-material/Edit';
 
 type UserInformationProps = {
-  user?: User;
+  user?: User & { bankAccount: BankAccount | null; };
 };
 
 const UserInformation = ({ user }: UserInformationProps) => {
@@ -21,7 +21,7 @@ const UserInformation = ({ user }: UserInformationProps) => {
       </Paper>
     );
   }
-  const userIban = user.iban ?? 'Nie podano numeru konta';
+  const userIban = user?.bankAccount ? user.bankAccount.iban : 'Nie podano numeru konta';
   return (
     <Paper
       sx={{
