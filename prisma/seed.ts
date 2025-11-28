@@ -9,9 +9,9 @@ async function clearDB() {
   await prisma.transaction.deleteMany();
   await prisma.invoice.deleteMany();
   await prisma.bankAccount.deleteMany();
+  await prisma.collectionParticipant.deleteMany();
   await prisma.collection.deleteMany();
   await prisma.child.deleteMany();
-  await prisma.collectionParticipant.deleteMany();
   await prisma.classMembership.deleteMany();
   await prisma.class.deleteMany();
   await prisma.school.deleteMany();
@@ -24,28 +24,48 @@ async function clearDB() {
 
 const hashedPassword = await argon2.hash('password123');
 
-interface CreateBankAccountInput {
-  type: BankAccountType;
-  id: string;
-  iban?: string;
-  balance?: number;
-}
-
-export async function createBankAccount(
-  type: BankAccountType,
-  id: string,
-  balance: number = 0,
+export async function createBankAccountForUser(
+  userId: string,
+  balance = 0,
   iban?: string,
 ) {
-  return prisma.bankAccount.create({
+  const bankAccount = await prisma.bankAccount.create({
     data: {
-      type,
+      type: BankAccountType.USER,
       iban: iban ?? generateIban(),
       balance,
-      userId: type === BankAccountType.USER ? id : undefined,
-      collectionId: type === BankAccountType.COLLECTION ? id : undefined,
+      userId,
     },
   });
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { bankAccountId: bankAccount.id }
+  })
+
+  return bankAccount;
+}
+
+export async function createBankAccountForCollection(
+  collectionId: string,
+  balance = 0,
+  iban?: string,
+) {
+  const bankAccount = await prisma.bankAccount.create({
+    data: {
+      type: BankAccountType.COLLECTION,
+      iban: iban ?? generateIban(),
+      balance,
+      collectionId,
+    },
+  });
+
+  await prisma.collection.update({
+    where: { id: collectionId },
+    data: { bankAccountId: bankAccount.id }
+  })
+
+  return bankAccount;
 }
 
 function generateIban() {
@@ -64,12 +84,7 @@ async function createMockUser(name: string, email: string, image: string | null 
     },
   });
 
-  const bankAccount = await createBankAccount(BankAccountType.USER, user.id);
-
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { bankAccountId: bankAccount.id },
-  });
+  await createBankAccountForUser(user.id);
 
   return user;
 }
@@ -173,12 +188,7 @@ async function createMockCollection(
     },
   });
 
-  const bankAccount = await createBankAccount(BankAccountType.COLLECTION, collection.id);
-
-  await prisma.collection.update({
-    where: { id: collection.id },
-    data: { bankAccountId: bankAccount.id },
-  });
+  await createBankAccountForCollection(collection.id);
 
   const children = await prisma.child.findMany({
     where: { membership: { classId } },
