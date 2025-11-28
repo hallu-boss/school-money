@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { ClassMembershipRole, PrismaClient } from '@prisma/client';
+import { BankAccountType, ClassMembershipRole, PrismaClient } from '@prisma/client';
 import argon2 from 'argon2';
 
 const prisma = new PrismaClient();
@@ -24,17 +24,26 @@ async function clearDB() {
 
 const hashedPassword = await argon2.hash('password123');
 
-type CreateBankAccountInput =
-  | { userId: string; collectionId?: never; iban?: string; balance?: number }
-  | { collectionId: string; userId?: never; iban?: string; balance?: number };
+interface CreateBankAccountInput {
+  type: BankAccountType;
+  id: string;
+  iban?: string;
+  balance?: number;
+}
 
-export async function createBankAccount(data: CreateBankAccountInput) {
+export async function createBankAccount(
+  type: BankAccountType,
+  id: string,
+  balance: number = 0,
+  iban?: string,
+) {
   return prisma.bankAccount.create({
     data: {
-      iban: data.iban ?? generateIban(),
-      balance: data.balance ?? 0,
-      userId: data.userId,
-      collectionId: data.collectionId,
+      type,
+      iban: iban ?? generateIban(),
+      balance,
+      userId: type === BankAccountType.USER ? id : undefined,
+      collectionId: type === BankAccountType.COLLECTION ? id : undefined,
     },
   });
 }
@@ -55,7 +64,12 @@ async function createMockUser(name: string, email: string, image: string | null 
     },
   });
 
-  await createBankAccount({ userId: user.id });
+  const bankAccount = await createBankAccount(BankAccountType.USER, user.id);
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { bankAccountId: bankAccount.id },
+  });
 
   return user;
 }
@@ -159,7 +173,12 @@ async function createMockCollection(
     },
   });
 
-  await createBankAccount({ collectionId: collection.id })
+  const bankAccount = await createBankAccount(BankAccountType.COLLECTION, collection.id);
+
+  await prisma.collection.update({
+    where: { id: collection.id },
+    data: { bankAccountId: bankAccount.id },
+  });
 
   return collection;
 }
