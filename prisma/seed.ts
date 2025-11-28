@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { ClassMembershipRole, PrismaClient } from '@prisma/client';
 import argon2 from 'argon2';
 
