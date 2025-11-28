@@ -8,7 +8,7 @@ import { EditProfileDialog } from './EditProfileDialog';
 import EditIcon from '@mui/icons-material/Edit';
 
 type UserInformationProps = {
-  user?: User & { bankAccount: BankAccount | null; };
+  user?: User & { bankAccount: BankAccount | null };
 };
 
 const UserInformation = ({ user }: UserInformationProps) => {

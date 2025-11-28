@@ -70,7 +70,6 @@ export const createClass = async (payload: FormData) => {
     const buffer = Buffer.from(bytes);
     await writeFile(filePath, buffer);
 
-    
     //TODO: Odkomentować w momencie gdy Paweł Majster doda avatarUrl do bazy
     // const classAvatarUrl = `/uploads/classes/${newClass.id}/${fileName}`;
     // await db.class.update({

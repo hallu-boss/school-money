@@ -21,8 +21,8 @@ export const returnProperUser = async (userId?: string) => {
   const properUser = await db.user.findUnique({
     where: { id: userId },
     include: {
-      bankAccount: true
-    }
+      bankAccount: true,
+    },
   });
 
   return properUser;
