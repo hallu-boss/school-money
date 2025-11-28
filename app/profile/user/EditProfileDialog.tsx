@@ -43,7 +43,6 @@ export const EditProfileDialog = ({ open, onClose, user }: EditProfileDialogProp
   // Stany błędów
   const [nameError, setNameError] = useState('');
   const [emailError, setEmailError] = useState('');
-  const [ibanError, setIbanError] = useState('');
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
@@ -122,28 +121,6 @@ export const EditProfileDialog = ({ open, onClose, user }: EditProfileDialogProp
     return true;
   };
 
-  //walidacja numeru konta
-  const validateIban = (value: string): boolean => {
-    const trimmed = value.trim();
-
-    if (trimmed.length === 0) {
-      setIbanError('Numer konta nie może być pusty');
-      return false;
-    }
-
-    if (!/^\d+$/.test(trimmed)) {
-      setIbanError('Numer konta może zawierać tylko cyfry');
-      return false;
-    }
-
-    if (trimmed.length !== 26) {
-      setIbanError('Numer konta musi mieć dokładnie 26 cyfr');
-      return false;
-    }
-
-    setIbanError('');
-    return true;
-  };
   //walidacja email
   const validateEmail = (value: string): boolean => {
     if (value.trim().length === 0) {

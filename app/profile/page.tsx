@@ -1,7 +1,6 @@
 import { auth } from '@/lib/auth';
 import { Container, Paper, Stack, Typography } from '@mui/material';
 import { redirect } from 'next/navigation';
-import { SignOut } from '../components/SignOut';
 import { UserInformation } from './user/UserInformation';
 import { ChildSection } from './child/ChildSection';
 import { returnProperUser } from './actions/actions';
