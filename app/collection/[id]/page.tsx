@@ -12,15 +12,17 @@ import { format } from 'date-fns';
 import path from 'path';
 import { auth } from '@/lib/auth';
 import { TreasurerActionButtonsRow } from './components/TreasurerActionButtonsRow';
+import { currentCollectionId, getCollectionData } from './actions/collection';
 interface PageProps {
   params: { id: string };
 }
 
 export default async function Page({ params }: PageProps) {
+  const { id } = await params;
+  await getCollectionData(id);
+  console.log(currentCollectionId);
   const session = await auth();
   if (!session) redirect('/sign-in');
-
-  const { id } = await params;
 
   const collection = await db.collection.findUnique({
     where: { id: id },
@@ -30,7 +32,7 @@ export default async function Page({ params }: PageProps) {
 
   const membership = await db.classMembership.findFirst({
     where: {
-      classId: id,
+      classId: collection.classId,
       userId: session.user?.id,
     },
   });

@@ -18,7 +18,6 @@ import AddIcon from '@mui/icons-material/Add';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import {
-  AttachmentProps,
   changeCollectionCover,
   deleteAttachment,
   downloadAttachment,
@@ -27,6 +26,11 @@ import {
   uploadAttachment,
 } from '../actions/actions';
 import { useState, useTransition } from 'react';
+
+export interface AttachmentProps {
+  id: string;
+  label: string;
+}
 
 interface CollectionTitleCardProps {
   coverImage: string | null;
