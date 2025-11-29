@@ -20,6 +20,9 @@ export const returnProperUser = async (userId?: string) => {
 
   const properUser = await db.user.findUnique({
     where: { id: userId },
+    include: {
+      bankAccount: true,
+    },
   });
 
   return properUser;
@@ -105,7 +108,7 @@ export const addChild = async (formData: FormData) => {
   const child = await db.child.create({
     data: {
       name: name.trim(),
-      userId: session.user.id,
+      parentId: session.user.id,
     },
   });
 
@@ -140,7 +143,7 @@ export async function getUserChildren() {
   }
 
   const children = await db.child.findMany({
-    where: { userId: session.user.id },
+    where: { parentId: session.user.id },
     include: {
       membership: {
         include: {
@@ -234,7 +237,7 @@ export async function abortChild(childId: string) {
   }
 
   //sprawdzenie czy dzieciak należy do zalogowanego użytkownika
-  if (child.userId !== session.user.id) {
+  if (child.parentId !== session.user.id) {
     throw new Error('Forbidden');
   }
 

@@ -7,30 +7,7 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model User {
-  id            String          @id @default(cuid())
-  name          String?
-  email         String          @unique
-  emailVerified DateTime?
-  password      String?
-  image         String?
-  iban          String?         @unique
-  accounts      Account[]
-  sessions      Session[]
-  // Optional for WebAuthn support
-  Authenticator Authenticator[]
- 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  children        Child[]
-  memberships     ClassMembership[]
-  collections      Collection[]
-  createdClasses  Class[]
-  createdInvoices Invoice[]
-  transactions    Transaction[]
-}
- 
+// Next auth part =================================
 model Account {
   userId            String
   type              String
@@ -85,37 +62,141 @@ model Authenticator {
  
   @@id([userId, credentialID])
 }
+// ================================================
+
+model User {
+  id            String          @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name          String?
+  email         String          @unique
+  password      String?
+  image         String?
+ 
+  bankAccount        BankAccount?
+  bankAccountId      String? @unique
+
+  children           Child[]
+  memberships        ClassMembership[]
+  createdCollections Collection[]
+  createdClasses     Class[]
+  createdInvoices    Invoice[]
+  transactions       Transaction[]
+
+  // next auth
+  emailVerified DateTime?
+  accounts      Account[]
+  sessions      Session[]
+  Authenticator Authenticator[]
+}
+
+model BankAccount {
+  id           String    @id @default(uuid())
+  createdAt    DateTime  @default(now())
+
+  iban         String?   @unique
+  balance      Decimal   @default(0) @db.Decimal(12, 2)
+
+  type         BankAccountType
+
+  // powiązanie 1:1 z user lub collection (co najwyżej jedno z nich nie-null)
+  user         User?     @relation(fields: [userId], references: [id])
+  userId       String?   @unique
+
+  collection   Collection? @relation(fields: [collectionId], references: [id])
+  collectionId String?   @unique
+
+  // ledger relations
+  transactionsFrom Transaction[] @relation("FromAccount")
+  transactionsTo   Transaction[] @relation("ToAccount")
+}
+
+enum BankAccountType {
+  USER
+  COLLECTION
+}
+
+model Transaction {
+  id            String       @id @default(uuid())
+  createdAt     DateTime     @default(now())
+  type          TransactionType
+  amount        Decimal      @db.Decimal(10, 2)
+  title         String
+
+  // ledger
+  fromAccount   BankAccount? @relation("FromAccount", fields: [fromAccountId], references: [id])
+  fromAccountId String?
+  toAccount     BankAccount? @relation("ToAccount", fields: [toAccountId], references: [id])
+  toAccountId   String?
+
+  // user performing
+  user          User         @relation(fields: [userId], references: [id])
+  userId        String
+
+  // domain refs
+  child         Child?       @relation("ChildTransactions", fields: [childId], references: [id])
+  childId       String?
+
+  collection    Collection?  @relation(fields: [collectionId], references: [id])
+  collectionId  String?
+
+  // 1:1 ⟻→ Payment (podstawowa płatność)
+  payment       Payment?
+
+  // 1:N — transakcja może być refundem dla jednego paymentu
+  refundForPayment     Payment?     @relation("RefundRelation")
+}
+
+enum TransactionType {
+  PAYMENT             // rodzic -> konto kolekcji
+  REFUND              // konto kolekcji -> rodzic
+  WITHDRAWAL          // konto kolekcji -> skarbnik (user)
+  TREASURER_DEPOSIT   // skarbnik -> konto kolekcji (np. oddanie)
+  COLLECTION_REFUND   // masowy zwrot po anulowaniu zbiórki (kolekcja -> rodzice)
+}
 
 model Child {
   id              String            @id @default(uuid())
   createdAt       DateTime          @default(now())
+
   name            String
   avatarUrl       String?
-  User            User?             @relation(fields: [userId], references: [id])
-  userId          String?
+
+  Parent            User?             @relation(fields: [parentId], references: [id])
+  parentId          String?
+
   membership      ClassMembership?  @relation(fields: [membershipId], references: [id])
   membershipId    String?
-  transactions         Transaction[]
+
+  transactions    Transaction[]     @relation("ChildTransactions")
+  participants    CollectionParticipant[]
 }
 
 model School {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())
+
   name      String
+
   classes   Class[]
 }
 
 model Class {
   id          String            @id @default(uuid())
   createdAt   DateTime          @default(now())
+
   createdBy   User              @relation(fields: [createdById], references: [id])
   createdById String
+
   name        String
-  School      School?           @relation(fields: [schoolId], references: [id])
-  schoolId    String?
-  memberships ClassMembership[]
   accessCode  String?           @unique
   isArchived  Boolean           @default(false)
+
+  School      School?           @relation(fields: [schoolId], references: [id])
+  schoolId    String?
+
+  memberships ClassMembership[]
   collections Collection[]
 }
 
@@ -137,61 +218,85 @@ model ClassMembership {
   @@unique([userId, classId])
 }
 
-model CollectionAccount {
-  id           String     @id @default(uuid())
-  createdAt    DateTime   @default(now())
-  collection   Collection @relation(fields: [collectionId], references: [id])
-  collectionId String     @unique
-  iban         String     @unique
-  balance      Decimal    @default(0) @db.Decimal(12, 2)
-}
-
-enum TransactionType {
-  PAYMENT
-  WITHDRAWAL
-  REFUND
-}
-
-model Transaction {
-  id            String       @id @default(uuid())
-  createdAt     DateTime     @default(now())
-  type          TransactionType
-  amount        Decimal      @db.Decimal(10, 2)
-
-  // short info of cause
-  title         String
-
-  // USER who performed transaction
-  user          User         @relation(fields: [userId], references: [id])
-  userId        String
-
-  // in case PAYMENT or REFUND
-  child         Child?       @relation(fields: [childId], references: [id])
-  childId       String?
-
-  collection    Collection   @relation(fields: [collectionId], references: [id])
-  collectionId  String
+enum ClassMembershipRole {
+  PARENT
+  TREASURER
 }
 
 model Collection {
   id             String             @id @default(uuid())
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
-  title           String
+
+  state          CollectionState    @default(ACTIVE)
+  title          String
   description    String?
   coverUrl       String?
   startAt        DateTime
   endAt          DateTime
+  amountPerChild Decimal            @db.Decimal(10, 2)
+
   class          Class              @relation(fields: [classId], references: [id])
   classId        String
+
   author         User               @relation(fields: [authorId], references: [id])
   authorId       String
-  amountPerChild Decimal            @db.Decimal(10, 2)
-  isClosed       Boolean            @default(false)
-  account        CollectionAccount?
-  accountId      String?
+  
+  bankAccount        BankAccount?
+  bankAccountId      String?
+
   invoices       Invoice[]
   transactions   Transaction[]
+  participants   CollectionParticipant[]
+}
+
+enum CollectionState {
+  ACTIVE
+  CANCELLED
+  CLOSED
+}
+model CollectionParticipant {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  child         Child      @relation(fields: [childId], references: [id])
+  childId       String
+
+  collection    Collection @relation(fields: [collectionId], references: [id])
+  collectionId  String
+
+  joinedAt      DateTime   @default(now())
+  leftAt        DateTime?
+  isActive      Boolean    @default(true)
+
+  payments      Payment[]
+
+  @@unique([childId, collectionId])
+}
+
+model Payment {
+  id            String       @id @default(uuid())
+  createdAt     DateTime     @default(now())
+
+  participant   CollectionParticipant @relation(fields: [participantId], references: [id])
+  participantId String
+
+  // powiązanie z transakcją wpłaty
+  transaction   Transaction  @relation(fields: [transactionId], references: [id])
+  transactionId String @unique
+
+  // refund powiązany z Transaction.type = REFUND / COLLECTION_REFUND
+  refundTransaction   Transaction? @relation("RefundRelation", fields: [refundTransactionId], references: [id])
+  refundTransactionId String? @unique
+
+  status        PaymentStatus @default(COMPLETED)
+  note          String?
+}
+
+enum PaymentStatus {
+  COMPLETED
+  REFUNDED
+  CANCELLED
 }
 
 model Invoice {
@@ -205,7 +310,3 @@ model Invoice {
   description  String
 }
 
-enum ClassMembershipRole {
-  PARENT
-  TREASURER
-}

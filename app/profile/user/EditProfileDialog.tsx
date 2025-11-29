@@ -30,7 +30,6 @@ export const EditProfileDialog = ({ open, onClose, user }: EditProfileDialogProp
   const [email, setEmail] = useState(user.email || '');
   const [avatarPreview, setAvatarPreview] = useState(user.image || '');
   const [file, setFile] = useState<File | null>(null);
-  const [iban, setIban] = useState(user.iban || '');
 
   // const resetForm = () => {
   //   setName('');
@@ -44,7 +43,6 @@ export const EditProfileDialog = ({ open, onClose, user }: EditProfileDialogProp
   // Stany błędów
   const [nameError, setNameError] = useState('');
   const [emailError, setEmailError] = useState('');
-  const [ibanError, setIbanError] = useState('');
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
@@ -71,25 +69,13 @@ export const EditProfileDialog = ({ open, onClose, user }: EditProfileDialogProp
     }
   };
 
-  // Handler dla zmiany numeru konta
-  const handleIbanChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setIban(value);
-    if (value.trim() !== (user?.iban || '')) {
-      validateIban(value);
-    } else {
-      setIbanError('');
-    }
-  };
-
   // Sprawdzanie czy są jakieś zmiany
   const hasChanges = useMemo(() => {
     const hasNameChange = name.trim() !== (user?.name || '');
     const hasEmailChange = email.trim() !== (user?.email || '');
     const hasFileChange = file !== null;
-    const hasIbanChange = iban.trim() !== (user?.iban || '');
-    return hasNameChange || hasEmailChange || hasFileChange || hasIbanChange;
-  }, [name, user?.name, user?.email, user?.iban, email, file, iban]);
+    return hasNameChange || hasEmailChange || hasFileChange;
+  }, [name, user?.name, user?.email, email, file]);
 
   // Sprawdzanie czy formularz jest poprawny
   const isFormValid = useMemo(() => {
@@ -106,12 +92,8 @@ export const EditProfileDialog = ({ open, onClose, user }: EditProfileDialogProp
       if (!emailRegex.test(email.trim())) return false;
     }
 
-    if (iban.trim() !== (user?.iban || '')) {
-      if (!/^\d{26}$/.test(iban.trim())) return false;
-    }
-
     return true;
-  }, [hasChanges, name, user?.name, user?.email, user?.iban, email, iban]);
+  }, [hasChanges, name, user?.name, user?.email, email]);
 
   // Handler dla zmiany emaila
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -139,28 +121,6 @@ export const EditProfileDialog = ({ open, onClose, user }: EditProfileDialogProp
     return true;
   };
 
-  //walidacja numeru konta
-  const validateIban = (value: string): boolean => {
-    const trimmed = value.trim();
-
-    if (trimmed.length === 0) {
-      setIbanError('Numer konta nie może być pusty');
-      return false;
-    }
-
-    if (!/^\d+$/.test(trimmed)) {
-      setIbanError('Numer konta może zawierać tylko cyfry');
-      return false;
-    }
-
-    if (trimmed.length !== 26) {
-      setIbanError('Numer konta musi mieć dokładnie 26 cyfr');
-      return false;
-    }
-
-    setIbanError('');
-    return true;
-  };
   //walidacja email
   const validateEmail = (value: string): boolean => {
     if (value.trim().length === 0) {
@@ -193,12 +153,6 @@ export const EditProfileDialog = ({ open, onClose, user }: EditProfileDialogProp
       }
       if (file) {
         formData.append('file', file);
-      }
-      if (iban.trim() !== (user?.iban || '')) {
-        formData.append('iban', iban.trim());
-      }
-      if (iban.trim() !== (user?.iban || '')) {
-        if (!/^\d{26}$/.test(iban.trim())) return false;
       }
       const result = await updateUserProfile(formData);
 
@@ -242,14 +196,6 @@ export const EditProfileDialog = ({ open, onClose, user }: EditProfileDialogProp
           error={!!emailError}
           helperText={emailError || 'Podaj poprawny adres email'}
           type="email"
-          required
-        />
-        <TextField
-          label="Numer konta"
-          value={iban}
-          onChange={handleIbanChange}
-          error={!!ibanError}
-          helperText={ibanError || 'Podaj poprawny numer konta'}
           required
         />
         <Box
