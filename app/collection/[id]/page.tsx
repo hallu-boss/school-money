@@ -119,6 +119,7 @@ export default async function Page({ params }: PageProps) {
               : 'UNPAID';
           return {
             ...p.child,
+            id: p.id,
             status,
           };
         })}

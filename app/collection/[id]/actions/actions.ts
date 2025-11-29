@@ -15,3 +15,7 @@ export const withdrawFromCollection = (fromCollectionId: string, toAccountId: st
 
 export const closeCollection = (collectionId: string) => {};
 
+export const payForParticipant = (collectionId: string, participantId: string, sponsorId: string) => {
+  
+}
+
