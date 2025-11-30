@@ -4,16 +4,37 @@ import { TransactionType } from '@prisma/client';
 import { currentCollectionId } from './collection';
 import { performTransaction } from '@/lib/utils/transaction';
 import { auth } from '@/lib/auth';
+import { mkdir, writeFile } from 'fs/promises';
+import path from 'path';
 
-export const changeCollectionCover = async () => {};
+export const changeCollectionCover = async (file: File) => {
+  if (!currentCollectionId) throw new Error('Undefined Collection');
+  if (file.size == 0) return;
+  const userDir = path.join(process.cwd(), 'public', 'uploads', 'collection', currentCollectionId);
+  await mkdir(userDir, { recursive: true });
+
+  const timestamp = Date.now();
+  const ext = path.extname(file.name) || '.jpg';
+  const fileName = `cover_${timestamp}${ext}`;
+  const filePath = path.join(userDir, fileName);
+
+  const bytes = await file.arrayBuffer();
+  const buffer = Buffer.from(bytes);
+  await writeFile(filePath, buffer);
+
+  await db.collection.update({
+    where: { id: currentCollectionId },
+    data: { coverUrl: `/uploads/collection/${currentCollectionId}/${fileName}` }
+  })
+};
 
 export const updateCollectionDescription = async (newDescription: string) => {
   if (!currentCollectionId) throw new Error('Undefined Collection');
 
   await db.collection.update({
     where: { id: currentCollectionId },
-    data: { description: newDescription }
-  })
+    data: { description: newDescription },
+  });
 };
 
 export const updateCollectionTitle = async (newTitle: string) => {
@@ -21,8 +42,8 @@ export const updateCollectionTitle = async (newTitle: string) => {
 
   await db.collection.update({
     where: { id: currentCollectionId },
-    data: { title: newTitle }
-  })
+    data: { title: newTitle },
+  });
 };
 
 export const deleteAttachment = async () => {};

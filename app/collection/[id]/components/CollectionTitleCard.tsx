@@ -25,7 +25,8 @@ import {
   updateCollectionTitle,
   uploadAttachment,
 } from '../actions/actions';
-import { useState, useTransition } from 'react';
+import { useRef, useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 
 export interface AttachmentProps {
   id: string;
@@ -55,6 +56,8 @@ export const CollectionTitleCard = ({
   attachments,
   editable,
 }: CollectionTitleCardProps) => {
+  const router = useRouter();
+
   const collectionProgress = (raised / goal) * 100;
 
   const [isEditingTitle, setEditingTitle] = useState(false);
@@ -64,6 +67,8 @@ export const CollectionTitleCard = ({
   const [draftDescription, setDraftDescription] = useState(description);
 
   const [isPending, startTransition] = useTransition();
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const saveTitle = () => {
     startTransition(async () => {
@@ -89,24 +94,46 @@ export const CollectionTitleCard = ({
     setEditingDescription(false);
   };
 
+  const handleCoverImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      startTransition(async () => {
+        await changeCollectionCover(file);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+        router.refresh();
+      });
+    }
+  };
+
   return (
     <Card>
       {/* Cover image */}
       <Box position="relative">
         {coverImage && <CardMedia component="img" height="260" image={coverImage} alt="cover" />}
         {editable && (
-          <IconButton
-            onClick={changeCollectionCover}
-            sx={{
-              position: 'absolute',
-              top: 8,
-              right: 8,
-              bgcolor: 'rgba(255,255,255,0.8)',
-              '&:hover': { bgcolor: 'white' },
-            }}
-          >
-            <EditIcon />
-          </IconButton>
+          <>
+            <IconButton
+              onClick={() => fileInputRef.current?.click()}
+              sx={{
+                position: 'absolute',
+                top: 8,
+                right: 8,
+                bgcolor: 'rgba(255,255,255,0.8)',
+                '&:hover': { bgcolor: 'white' },
+              }}
+            >
+              <EditIcon />
+            </IconButton>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleCoverImageChange}
+              accept="image/*"
+              style={{ display: 'none' }}
+            />
+          </>
         )}
       </Box>
       <CardContent>
