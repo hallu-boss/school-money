@@ -50,7 +50,30 @@ export const deleteAttachment = async () => {};
 
 export const downloadAttachment = async () => {};
 
-export const uploadAttachment = async () => {};
+export const uploadAttachment = async (file: File) => {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error('Unauthorized');
+  if (!currentCollectionId) throw new Error('Undefined Collection');
+
+  if (file.size == 0) return;
+  const userDir = path.join(process.cwd(), 'public', 'uploads', 'collection', currentCollectionId, 'invoices');
+  await mkdir(userDir, { recursive: true });
+
+  const filePath = path.join(userDir, file.name);
+
+  const bytes = await file.arrayBuffer();
+  const buffer = Buffer.from(bytes);
+  await writeFile(filePath, buffer);
+
+  await db.invoice.create({
+    data: {
+      createdById: session.user.id,
+      collectionId: currentCollectionId,
+      fileUrl: `uploads/collection/${currentCollectionId}/invoices/${file.name}`,
+      description: ""
+    }
+  })
+};
 
 export const withdrawFromCollection = async (
   fromCollectionId: string,

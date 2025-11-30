@@ -69,6 +69,7 @@ export const CollectionTitleCard = ({
   const [isPending, startTransition] = useTransition();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const attachmentInputRef = useRef<HTMLInputElement>(null);
 
   const saveTitle = () => {
     startTransition(async () => {
@@ -101,6 +102,22 @@ export const CollectionTitleCard = ({
         await changeCollectionCover(file);
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
+        }
+        router.refresh();
+      });
+    }
+  };
+
+  const handleAttachmentChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      startTransition(async () => {
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          await uploadAttachment(file);
+        }
+        if (attachmentInputRef.current) {
+          attachmentInputRef.current.value = '';
         }
         router.refresh();
       });
@@ -261,7 +278,22 @@ export const CollectionTitleCard = ({
                 onClick={downloadAttachment}
               />
             ))}
-            {editable && <Chip icon={<AddIcon />} label="Dodaj" onClick={uploadAttachment} />}
+            {editable && (
+              <>
+                <Chip
+                  icon={<AddIcon />}
+                  label="Dodaj"
+                  onClick={() => attachmentInputRef.current?.click()}
+                />
+                <input
+                  type="file"
+                  ref={attachmentInputRef}
+                  onChange={handleAttachmentChange}
+                  multiple // Umożliwia wybór wielu plików
+                  style={{ display: 'none' }}
+                />
+              </>
+            )}
           </Stack>
         </Box>
       </CardContent>
