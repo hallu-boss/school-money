@@ -226,7 +226,7 @@ export const cancelCollection = async (collectionId: string, userId: string) => 
   });
 
   await Promise.all(
-    payments.map((payment) => refundPayment(payment.id, TransactionType.COLLECTION_REFUND, userId)),
+    payments.map((payment) => refundPayment(payment.id, userId, TransactionType.COLLECTION_REFUND)),
   );
 
   await db.collection.update({
@@ -235,10 +235,10 @@ export const cancelCollection = async (collectionId: string, userId: string) => 
   });
 };
 
-const refundPayment = async (
+export const refundPayment = async (
   paymentId: string,
-  transactionType: TransactionType = TransactionType.REFUND,
   userId: string,
+  transactionType: TransactionType = TransactionType.REFUND,
 ) => {
   const payment = await db.payment.findUniqueOrThrow({
     where: { id: paymentId },
@@ -277,6 +277,48 @@ const refundPayment = async (
     data: {
       refundTransactionId: transaction.id,
       status: PaymentStatus.REFUNDED,
+    },
+  });
+};
+
+export const refundParticipantPayment = async (participantId: string, userId: string) => {
+  const participant = await db.collectionParticipant.findUniqueOrThrow({
+    where: { id: participantId },
+    include: {
+      child: true,
+      payments: { orderBy: { createdAt: 'asc' } },
+    },
+  });
+
+  if (
+    !participant.payments ||
+    participant.payments[participant.payments.length - 1].status === 'REFUNDED'
+  )
+    throw new Error('Nothing to refund');
+
+  const payment = participant.payments[participant.payments.length - 1];
+
+  await refundPayment(payment.id, userId);
+
+  if (participant.child.parentId === userId) {
+    await signOffParticipant(participantId);
+  }
+};
+
+export const signInParticipant = async (participantId: string) => {
+  await db.collectionParticipant.update({
+    where: { id: participantId },
+    data: {
+      isActive: true,
+    },
+  });
+};
+
+export const signOffParticipant = async (participantId: string) => {
+  await db.collectionParticipant.update({
+    where: { id: participantId },
+    data: {
+      isActive: false,
     },
   });
 };

@@ -1,19 +1,28 @@
 'use client';
-import { Box, Typography, Grid, Paper, Avatar, Button } from '@mui/material';
+import { Box, Typography, Grid, Paper, Avatar, Button, Stack } from '@mui/material';
 import { Child } from '@prisma/client';
-import { payForParticipant } from '../actions/actions';
+import {
+  payForParticipant,
+  refundParticipantPayment,
+  signInParticipant,
+  signOffParticipant,
+} from '../actions/actions';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 export type ChildStatus = 'UNPAID' | 'PAID' | 'SIGNED_OFF';
 
-export type ChildData = Pick<Child, 'id' | 'name' | 'avatarUrl'> & { status: ChildStatus };
+export type ChildData = Pick<Child, 'id' | 'name' | 'avatarUrl'> & {
+  status: ChildStatus;
+  belongsToUser: boolean;
+};
 
 interface ChildrenGridProps {
   childrenGridData: ChildData[];
+  userId: string;
 }
 
-export const ChildrenGrid = ({ childrenGridData }: ChildrenGridProps) => {
+export const ChildrenGrid = ({ childrenGridData, userId }: ChildrenGridProps) => {
   const router = useRouter();
 
   const [processing, setProcessing] = useState<Set<string>>(new Set());
@@ -34,6 +43,21 @@ export const ChildrenGrid = ({ childrenGridData }: ChildrenGridProps) => {
       clone.delete(id);
       return clone;
     });
+  };
+
+  const handleRefundParticipant = async (id: string) => {
+    await refundParticipantPayment(id, userId);
+    router.refresh();
+  };
+
+  const handleSignInParticipant = async (id: string) => {
+    await signInParticipant(id);
+    router.refresh();
+  };
+
+  const handleSignOffParticipant = async (id: string) => {
+    await signOffParticipant(id);
+    router.refresh();
   };
 
   const renderChild = (child: ChildData, action?: React.ReactNode, faded?: boolean) => (
@@ -71,13 +95,25 @@ export const ChildrenGrid = ({ childrenGridData }: ChildrenGridProps) => {
             unpaid.map((ch) =>
               renderChild(
                 ch,
-                <Button
-                  variant="contained"
-                  disabled={processing.has(ch.id)}
-                  onClick={() => handlePay(ch.id)}
-                >
-                  Zapłać
-                </Button>,
+                <Stack direction="row" spacing={1}>
+                  <Button
+                    variant="contained"
+                    disabled={processing.has(ch.id)}
+                    onClick={() => handlePay(ch.id)}
+                  >
+                    Zapłać
+                  </Button>
+                  {ch.belongsToUser && (
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      disabled={processing.has(ch.id)}
+                      onClick={() => handleSignOffParticipant(ch.id)}
+                    >
+                      Wypisz
+                    </Button>
+                  )}
+                </Stack>,
               ),
             )
           ) : (
@@ -94,7 +130,14 @@ export const ChildrenGrid = ({ childrenGridData }: ChildrenGridProps) => {
 
         <Grid container spacing={2}>
           {paid.length > 0 ? (
-            paid.map((ch) => renderChild(ch, <Button variant="outlined">Podgląd</Button>))
+            paid.map((ch) =>
+              renderChild(
+                ch,
+                <Button variant="outlined" onClick={() => handleRefundParticipant(ch.id)}>
+                  {ch.belongsToUser ? 'Wypisz' : 'Zwrot'}
+                </Button>,
+              ),
+            )
           ) : (
             <Typography sx={{ opacity: 0.6 }}>Brak dzieci w tej kategorii</Typography>
           )}
@@ -109,7 +152,15 @@ export const ChildrenGrid = ({ childrenGridData }: ChildrenGridProps) => {
 
         <Grid container spacing={2}>
           {signedOff.length > 0 ? (
-            signedOff.map((ch) => renderChild(ch, <Button disabled>WYPISANO</Button>, true))
+            signedOff.map((ch) =>
+              renderChild(
+                ch,
+                ch.belongsToUser ? (
+                  <Button onClick={() => handleSignInParticipant(ch.id)}>Zapisz</Button>
+                ) : null,
+                true,
+              ),
+            )
           ) : (
             <Typography sx={{ opacity: 0.6 }}>Brak dzieci w tej kategorii</Typography>
           )}

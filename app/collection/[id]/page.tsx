@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Button, Stack, Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { CollectionTitleCard } from './components/CollectionTitleCard';
 import {
   TransactionHistoryRow,
@@ -143,6 +143,7 @@ export default async function Page({ params }: PageProps) {
       {/* Unpaid children */}
       {collection.state === 'ACTIVE' && (
         <ChildrenGrid
+          userId={session.user?.id}
           childrenGridData={participants.map((p): ChildData => {
             const lastPayment = p.payments[p.payments.length - 1];
             const status: ChildStatus = !p.isActive
@@ -150,10 +151,12 @@ export default async function Page({ params }: PageProps) {
               : lastPayment?.status === 'COMPLETED'
                 ? 'PAID'
                 : 'UNPAID';
+            const belongsToUser = p.child.parentId === session.user?.id;
             return {
               ...p.child,
               id: p.id,
               status,
+              belongsToUser,
             };
           })}
         />
