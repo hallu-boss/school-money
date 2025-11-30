@@ -11,10 +11,10 @@ export const performTransaction = async (
   userId: string,
 ) => {
   const fromBankAccount = await db.bankAccount.findUniqueOrThrow({
-    where: { id: fromAccountId }
+    where: { id: fromAccountId },
   });
 
-  if (fromBankAccount.balance.lt(amount)) throw new Error("Bank Account balance to small");
+  if (fromBankAccount.balance.lt(amount)) throw new Error('Bank Account balance to small');
 
   const transaction = await db.transaction.create({
     data: {

@@ -1,6 +1,6 @@
 'use server';
 import db from '@/lib/db';
-import { TransactionType } from '@prisma/client';
+import { CollectionState, PaymentStatus, TransactionType } from '@prisma/client';
 import { currentCollectionId } from './collection';
 import { performTransaction } from '@/lib/utils/transaction';
 import { auth } from '@/lib/auth';
@@ -180,7 +180,113 @@ export const depositToCollection = async (
   });
 };
 
-export const closeCollection = async (collectionId: string) => {};
+export const cancelCollection = async (collectionId: string, userId: string) => {
+  const withdrawalSum = await db.transaction.aggregate({
+    where: {
+      collectionId,
+      type: 'WITHDRAWAL',
+    },
+    _sum: {
+      amount: true,
+    },
+  });
+
+  const depositSum = await db.transaction.aggregate({
+    where: {
+      collectionId,
+      type: 'TREASURER_DEPOSIT',
+    },
+    _sum: {
+      amount: true,
+    },
+  });
+
+  // Obliczenie różnicy
+  const withdrawalTotal = withdrawalSum._sum.amount || new Decimal(0);
+  const depositTotal = depositSum._sum.amount || new Decimal(0);
+  const difference = withdrawalTotal.minus(depositTotal).toNumber();
+
+  if (difference !== 0) throw new Error('Unregulated collection');
+
+  const payments = await db.payment.findMany({
+    where: {
+      participant: {
+        collectionId: collectionId,
+      },
+      refundTransactionId: null,
+    },
+    include: {
+      participant: {
+        include: {
+          child: true,
+        },
+      },
+      transaction: true,
+    },
+  });
+
+  await Promise.all(
+    payments.map((payment) => refundPayment(payment.id, TransactionType.COLLECTION_REFUND, userId)),
+  );
+
+  await db.collection.update({
+    where: { id: collectionId },
+    data: { state: CollectionState.CANCELLED },
+  });
+};
+
+const refundPayment = async (
+  paymentId: string,
+  transactionType: TransactionType = TransactionType.REFUND,
+  userId: string,
+) => {
+  const payment = await db.payment.findUniqueOrThrow({
+    where: { id: paymentId },
+    include: {
+      transaction: true,
+      participant: {
+        include: {
+          child: true,
+        },
+      },
+    },
+  });
+  if (!payment.transaction.toAccountId || !payment.transaction.fromAccountId)
+    throw new Error('No initial transaction');
+  if (payment.refundTransactionId) throw new Error('Payment already refunded');
+
+  const transaction = await performTransaction(
+    transactionType,
+    `Zwrot za ${payment.participant.child.name}`,
+    payment.transaction.toAccountId,
+    payment.transaction.fromAccountId,
+    payment.transaction.amount,
+    userId,
+  );
+
+  await db.transaction.update({
+    where: { id: transaction.id },
+    data: {
+      childId: payment.participant.childId,
+      collectionId: payment.participant.collectionId,
+    },
+  });
+
+  await db.payment.update({
+    where: { id: paymentId },
+    data: {
+      refundTransactionId: transaction.id,
+      status: PaymentStatus.REFUNDED,
+    },
+  });
+};
+
+export const activateCollection = async (collectionId: string) => {
+  await db.collection.update({
+    where: { id: collectionId },
+    data: { state: CollectionState.ACTIVE },
+  });
+};
 
 export const payForParticipant = async (participantId: string) => {
   const session = await auth();

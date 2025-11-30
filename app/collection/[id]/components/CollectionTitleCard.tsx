@@ -134,7 +134,7 @@ export const CollectionTitleCard = ({
   const handleAttachmentDownload = async (attachmentId: string) => {
     try {
       const result = await downloadAttachment(attachmentId);
-      
+
       if (result) {
         // Konwersja base64 na blob
         const byteCharacters = atob(result.fileBuffer);
@@ -144,7 +144,7 @@ export const CollectionTitleCard = ({
         }
         const byteArray = new Uint8Array(byteNumbers);
         const blob = new Blob([byteArray], { type: result.mimeType });
-        
+
         // Tworzenie linku do pobrania
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');

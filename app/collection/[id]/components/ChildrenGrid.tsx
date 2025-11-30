@@ -1,4 +1,4 @@
-'use client'
+'use client';
 import { Box, Typography, Grid, Paper, Avatar, Button } from '@mui/material';
 import { Child } from '@prisma/client';
 import { payForParticipant } from '../actions/actions';
@@ -23,18 +23,18 @@ export const ChildrenGrid = ({ childrenGridData }: ChildrenGridProps) => {
   const signedOff = childrenGridData.filter((c) => c.status === 'SIGNED_OFF');
 
   const handlePay = async (id: string) => {
-    setProcessing(prev => new Set([...prev, id]));
+    setProcessing((prev) => new Set([...prev, id]));
 
     await payForParticipant(id);
 
     router.refresh();
 
-    setProcessing(prev => {
+    setProcessing((prev) => {
       const clone = new Set(prev);
       clone.delete(id);
       return clone;
     });
-  }
+  };
 
   const renderChild = (child: ChildData, action?: React.ReactNode, faded?: boolean) => (
     <Grid size={6} key={child.id}>
@@ -71,7 +71,7 @@ export const ChildrenGrid = ({ childrenGridData }: ChildrenGridProps) => {
             unpaid.map((ch) =>
               renderChild(
                 ch,
-                <Button 
+                <Button
                   variant="contained"
                   disabled={processing.has(ch.id)}
                   onClick={() => handlePay(ch.id)}

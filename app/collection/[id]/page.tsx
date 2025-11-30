@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box } from '@mui/material';
+import { Box, Button, Stack, Typography } from '@mui/material';
 import { CollectionTitleCard } from './components/CollectionTitleCard';
 import {
   TransactionHistoryRow,
@@ -13,6 +13,8 @@ import path from 'path';
 import { auth } from '@/lib/auth';
 import { TreasurerActionButtonsRow } from './components/TreasurerActionButtonsRow';
 import { currentCollectionId, getCollectionData } from './actions/collection';
+import { CollectionState, TransactionType } from '@prisma/client';
+import { InfoCollectionCanceled } from './components/InfoCollectionCanceled';
 interface PageProps {
   params: { id: string };
 }
@@ -20,7 +22,7 @@ interface PageProps {
 export default async function Page({ params }: PageProps) {
   const { id } = await params;
   const coll = await getCollectionData(id);
-  if (!coll || !coll.bankAccount) throw new Error("no collection");
+  if (!coll || !coll.bankAccount) throw new Error('no collection');
   console.log(currentCollectionId);
   const session = await auth();
   if (!session || !session.user?.id) redirect('/sign-in');
@@ -39,8 +41,8 @@ export default async function Page({ params }: PageProps) {
   });
 
   const bankAccount = await db.bankAccount.findFirstOrThrow({
-    where: { userId: session.user.id }
-  })
+    where: { userId: session.user.id },
+  });
 
   if (!membership) throw new Error('Unauthorized');
 
@@ -68,14 +70,23 @@ export default async function Page({ params }: PageProps) {
   const getRaisedAndGoalAmount = () => {
     const costPerChild = Number(collection.amountPerChild);
     const childrenCount = participants.filter((p) => p.isActive).length;
-    const numOfPayments = participants
-      .map((p) => p.payments[p.payments.length - 1])
-      .filter((p) => p?.status === 'COMPLETED').length;
 
     const raised = Number(coll.bankAccount?.balance) ?? 0;
     const goal = costPerChild * childrenCount;
 
     return { raised, goal };
+  };
+
+  const getMaxDeposit = () => {
+    const sumTransactionType = (type: TransactionType) => {
+      return transactions
+        .filter((tx) => tx.type === type)
+        .reduce((sum, tx) => sum + tx.amount.toNumber(), 0);
+    };
+    const w_sum = sumTransactionType(TransactionType.WITHDRAWAL);
+    const d_sum = sumTransactionType(TransactionType.TREASURER_DEPOSIT);
+
+    return w_sum - d_sum;
   };
 
   const { raised, goal } = getRaisedAndGoalAmount();
@@ -84,7 +95,21 @@ export default async function Page({ params }: PageProps) {
 
   return (
     <Box p={4} maxWidth={900} margin="auto" display="flex" flexDirection="column" gap={4}>
-      {isTreasurer && <TreasurerActionButtonsRow collectionBalance={raised} userBalance={Number(bankAccount.balance)} userId={session.user.id} collectionId={id}/>}
+      {isTreasurer && collection.state === CollectionState.ACTIVE && (
+        <TreasurerActionButtonsRow
+          collectionBalance={raised}
+          userBalance={getMaxDeposit()}
+          userId={session.user.id}
+          collectionId={id}
+        />
+      )}
+
+      {collection.state === CollectionState.CANCELLED && (
+        <InfoCollectionCanceled collectionId={id} />
+      )}
+      {collection.state === CollectionState.CLOSED && (
+        <Typography sx={{ opacity: 0.6 }}>Zbiórka została zakończona</Typography>
+      )}
 
       {/* Header + Cover */}
       <CollectionTitleCard
@@ -116,21 +141,23 @@ export default async function Page({ params }: PageProps) {
       />
 
       {/* Unpaid children */}
-      <ChildrenGrid
-        childrenGridData={participants.map((p): ChildData => {
-          const lastPayment = p.payments[p.payments.length - 1];
-          const status: ChildStatus = !p.isActive
-            ? 'SIGNED_OFF'
-            : lastPayment?.status === 'COMPLETED'
-              ? 'PAID'
-              : 'UNPAID';
-          return {
-            ...p.child,
-            id: p.id,
-            status,
-          };
-        })}
-      />
+      {collection.state === 'ACTIVE' && (
+        <ChildrenGrid
+          childrenGridData={participants.map((p): ChildData => {
+            const lastPayment = p.payments[p.payments.length - 1];
+            const status: ChildStatus = !p.isActive
+              ? 'SIGNED_OFF'
+              : lastPayment?.status === 'COMPLETED'
+                ? 'PAID'
+                : 'UNPAID';
+            return {
+              ...p.child,
+              id: p.id,
+              status,
+            };
+          })}
+        />
+      )}
     </Box>
   );
 }

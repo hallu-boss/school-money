@@ -1,17 +1,18 @@
-"use client";
-import { 
-  Box, 
-  Button, 
-  Dialog, 
-  DialogActions, 
-  DialogContent, 
-  DialogTitle, 
+'use client';
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   TextField,
-  Alert 
-} from "@mui/material"
-import { useState } from "react"
-import { withdrawFromCollection, depositToCollection } from "../actions/actions";
-import { useRouter } from "next/navigation";
+  Alert,
+} from '@mui/material';
+import { useState } from 'react';
+import { withdrawFromCollection, depositToCollection, cancelCollection } from '../actions/actions';
+import { useRouter } from 'next/navigation';
+import { ConfirmationDialog } from './ConfirmDialog';
 
 interface TreasurerActionButtonsRowProps {
   collectionBalance: number;
@@ -20,15 +21,16 @@ interface TreasurerActionButtonsRowProps {
   collectionId: string;
 }
 
-export const TreasurerActionButtonsRow = ({ 
-  collectionBalance, 
-  userBalance, 
-  userId, 
-  collectionId 
+export const TreasurerActionButtonsRow = ({
+  collectionBalance,
+  userBalance,
+  userId,
+  collectionId,
 }: TreasurerActionButtonsRowProps) => {
   const router = useRouter();
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [depositOpen, setDepositOpen] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
   const [amount, setAmount] = useState<string>('');
   const [reason, setReason] = useState<string>('');
   const [amountError, setAmountError] = useState<string>('');
@@ -68,6 +70,27 @@ export const TreasurerActionButtonsRow = ({
     setReasonError('');
   };
 
+  // Handlers for Cancel Collection Dialog
+  const handleCancelClickOpen = () => {
+    setCancelOpen(true);
+  };
+
+  const handleCancelClose = () => {
+    setCancelOpen(false);
+  };
+
+  const handleCancelConfirm = async () => {
+    try {
+      await cancelCollection(collectionId, userId);
+      handleCancelClose();
+      router.refresh();
+      // Możesz też dodać tu dodatkowe akcje po udanym zamknięciu zbiórki
+    } catch (error) {
+      console.error('Błąd podczas zamykania zbiórki:', error);
+      // Tutaj możesz dodać obsługę błędów, np. wyświetlenie snackbar/alert
+    }
+  };
+
   const handleWithdrawAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setAmount(value);
@@ -78,7 +101,7 @@ export const TreasurerActionButtonsRow = ({
     }
 
     const numValue = parseFloat(value);
-    
+
     if (isNaN(numValue) || numValue <= 0) {
       setAmountError('Kwota musi być liczbą większą od zera');
     } else if (numValue > collectionBalance) {
@@ -100,7 +123,7 @@ export const TreasurerActionButtonsRow = ({
     }
 
     const numValue = parseFloat(value);
-    
+
     if (isNaN(numValue) || numValue <= 0) {
       setAmountError('Kwota musi być liczbą większą od zera');
     } else if (numValue > userBalance) {
@@ -115,7 +138,7 @@ export const TreasurerActionButtonsRow = ({
   const handleReasonChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setReason(value);
-    
+
     if (value.trim() === '') {
       setReasonError('Powód nie może być pusty');
     } else {
@@ -125,12 +148,12 @@ export const TreasurerActionButtonsRow = ({
 
   const handleWithdrawSubmit = () => {
     const numValue = parseFloat(amount);
-    
+
     if (isNaN(numValue) || numValue <= 0) {
       setAmountError('Kwota musi być liczbą większą od zera');
       return;
     }
-    
+
     if (numValue > collectionBalance) {
       setAmountError(`Kwota nie może przekraczać dostępnych środków (${collectionBalance} zł)`);
       return;
@@ -148,12 +171,12 @@ export const TreasurerActionButtonsRow = ({
 
   const handleDepositSubmit = () => {
     const numValue = parseFloat(amount);
-    
+
     if (isNaN(numValue) || numValue <= 0) {
       setAmountError('Kwota musi być liczbą większą od zera');
       return;
     }
-    
+
     if (numValue > userBalance) {
       setAmountError(`Kwota nie może przekraczać Twoich środków (${userBalance} zł)`);
       return;
@@ -177,7 +200,12 @@ export const TreasurerActionButtonsRow = ({
         Wypłać pieniądze
       </Button>
 
-      <Button variant="outlined" color="error">
+      <Button
+        variant="outlined"
+        color="error"
+        onClick={handleCancelClickOpen}
+        disabled={userBalance !== 0}
+      >
         Zamknij zbiórkę
       </Button>
 
@@ -192,7 +220,7 @@ export const TreasurerActionButtonsRow = ({
           <Alert severity="info" sx={{ mb: 2 }}>
             Dostępne środki w zbiórce: <strong>{collectionBalance} zł</strong>
           </Alert>
-          
+
           <TextField
             autoFocus
             margin="dense"
@@ -203,7 +231,7 @@ export const TreasurerActionButtonsRow = ({
             value={amount}
             onChange={handleWithdrawAmountChange}
             error={!!amountError}
-            helperText={amountError || "Wprowadź kwotę do wypłaty"}
+            helperText={amountError || 'Wprowadź kwotę do wypłaty'}
             placeholder="0.00"
             sx={{ mb: 2 }}
           />
@@ -216,7 +244,7 @@ export const TreasurerActionButtonsRow = ({
             value={reason}
             onChange={handleReasonChange}
             error={!!reasonError}
-            helperText={reasonError || "Wprowadź powód wypłaty (np. zakup materiałów)"}
+            helperText={reasonError || 'Wprowadź powód wypłaty (np. zakup materiałów)'}
             placeholder="Wprowadź powód wypłaty..."
             multiline
             rows={3}
@@ -224,8 +252,8 @@ export const TreasurerActionButtonsRow = ({
         </DialogContent>
         <DialogActions>
           <Button onClick={handleWithdrawClose}>Anuluj</Button>
-          <Button 
-            onClick={handleWithdrawSubmit} 
+          <Button
+            onClick={handleWithdrawSubmit}
             disabled={!isFormValid}
             variant="contained"
             color="primary"
@@ -242,7 +270,7 @@ export const TreasurerActionButtonsRow = ({
           <Alert severity="info" sx={{ mb: 2 }}>
             Twoje dostępne środki: <strong>{userBalance} zł</strong>
           </Alert>
-          
+
           <TextField
             autoFocus
             margin="dense"
@@ -253,7 +281,7 @@ export const TreasurerActionButtonsRow = ({
             value={amount}
             onChange={handleDepositAmountChange}
             error={!!amountError}
-            helperText={amountError || "Wprowadź kwotę do wpłaty"}
+            helperText={amountError || 'Wprowadź kwotę do wpłaty'}
             placeholder="0.00"
             sx={{ mb: 2 }}
           />
@@ -266,7 +294,7 @@ export const TreasurerActionButtonsRow = ({
             value={reason}
             onChange={handleReasonChange}
             error={!!reasonError}
-            helperText={reasonError || "Wprowadź powód wpłaty (np. dopłata do zbiórki)"}
+            helperText={reasonError || 'Wprowadź powód wpłaty (np. dopłata do zbiórki)'}
             placeholder="Wprowadź powód wpłaty..."
             multiline
             rows={3}
@@ -274,8 +302,8 @@ export const TreasurerActionButtonsRow = ({
         </DialogContent>
         <DialogActions>
           <Button onClick={handleDepositClose}>Anuluj</Button>
-          <Button 
-            onClick={handleDepositSubmit} 
+          <Button
+            onClick={handleDepositSubmit}
             disabled={!isFormValid}
             variant="contained"
             color="primary"
@@ -284,6 +312,18 @@ export const TreasurerActionButtonsRow = ({
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Cancel Collection Confirmation Dialog */}
+      <ConfirmationDialog
+        open={cancelOpen}
+        title="Zamknij zbiórkę"
+        message="Czy na pewno chcesz zamknąć tę zbiórkę? Tej operacji nie można cofnąć."
+        confirmText="Tak, zamknij zbiórkę"
+        cancelText="Nie, anuluj"
+        confirmColor="error"
+        onConfirm={handleCancelConfirm}
+        onCancel={handleCancelClose}
+      />
     </Box>
   );
-}
+};
