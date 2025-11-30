@@ -124,6 +124,13 @@ export const CollectionTitleCard = ({
     }
   };
 
+  const handleAttachmentDelete = (attachmentId: string) => {
+    startTransition(async () => {
+      await deleteAttachment(attachmentId);
+      router.refresh();
+    });
+  };
+
   return (
     <Card>
       {/* Cover image */}
@@ -274,7 +281,7 @@ export const CollectionTitleCard = ({
               <Chip
                 key={a.id}
                 label={a.label}
-                onDelete={editable ? deleteAttachment : undefined}
+                onDelete={editable ? () => handleAttachmentDelete(a.id) : undefined}
                 onClick={downloadAttachment}
               />
             ))}

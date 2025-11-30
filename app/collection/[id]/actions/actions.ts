@@ -46,7 +46,11 @@ export const updateCollectionTitle = async (newTitle: string) => {
   });
 };
 
-export const deleteAttachment = async () => {};
+export const deleteAttachment = async (invoiceId: string) => {
+  await db.invoice.delete({
+    where: { id: invoiceId }
+  })
+};
 
 export const downloadAttachment = async () => {};
 
