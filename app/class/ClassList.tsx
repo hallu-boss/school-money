@@ -20,6 +20,7 @@ import { ClassMembershipRole } from '@prisma/client';
 import { getUserClasses, leaveClass, removeChildFromClass, removeClass } from './actions/actions';
 import Image from 'next/image';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import { useRouter } from 'next/navigation';
 
 type ChildType = {
   id: string;
@@ -37,6 +38,8 @@ type ClassType = {
 };
 
 export const ClassList = () => {
+  const router = useRouter();
+
   const [userClasses, setUserClasses] = useState<ClassType[]>([]);
   const [openCreateClass, setOpenCreateClass] = useState(false);
   const [openJoinClass, setOpenJoinClass] = useState(false);
@@ -129,7 +132,21 @@ export const ClassList = () => {
             </Typography>
 
             {userClasses.map((cls) => (
-              <Card key={cls.id} sx={{ mb: 2 }}>
+              <Card
+                key={cls.id}
+                sx={{
+                  mb: 2,
+                  cursor: 'pointer',
+                  transition: '0.3s',
+                  '&:hover': {
+                    boxShadow: 6,
+                    transform: 'translateY(-2px)',
+                  },
+                }}
+                onClick={() => {
+                  router.push(`collection/${cls.id}`);
+                }}
+              >
                 <CardContent
                   sx={{
                     display: 'flex',
@@ -155,7 +172,9 @@ export const ClassList = () => {
                       <Button
                         variant="outlined"
                         color="error"
-                        onClick={() => handleDeleteClass(cls.id)}
+                        onClick={(e) => {
+                          (e.stopPropagation(), handleDeleteClass(cls.id));
+                        }}
                       >
                         Usuń klasę
                       </Button>
@@ -164,12 +183,21 @@ export const ClassList = () => {
                       <Button
                         variant="outlined"
                         color="error"
-                        onClick={() => handleLeaveClass(cls.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleLeaveClass(cls.id);
+                        }}
                       >
                         Opuść klasę
                       </Button>
                     )}
-                    <Button variant="outlined" onClick={() => toggleExpand(cls.id)}>
+                    <Button
+                      variant="outlined"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleExpand(cls.id);
+                      }}
+                    >
                       {expandedId === cls.id ? 'Ukryj dzieci' : 'Pokaż dzieci'}
                     </Button>
                   </Stack>
