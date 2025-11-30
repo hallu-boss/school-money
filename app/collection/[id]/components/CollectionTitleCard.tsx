@@ -115,7 +115,7 @@ export const CollectionTitleCard = ({
           {!isEditingTitle ? (
             <>
               <Typography variant="h4" fontWeight="bold" gutterBottom>
-                {title}
+                {draftTitle}
               </Typography>
               {editable && (
                 <IconButton size="small" onClick={() => setEditingTitle(true)}>
@@ -183,7 +183,7 @@ export const CollectionTitleCard = ({
           </Stack>
 
           {/* VIEW MODE */}
-          {!isEditingDescription && <Typography mt={1}>{description}</Typography>}
+          {!isEditingDescription && <Typography mt={1}>{draftDescription}</Typography>}
 
           {/* EDIT MODE */}
           {isEditingDescription && (

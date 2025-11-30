@@ -7,9 +7,23 @@ import { auth } from '@/lib/auth';
 
 export const changeCollectionCover = async () => {};
 
-export const updateCollectionDescription = async (newDescription: string) => {};
+export const updateCollectionDescription = async (newDescription: string) => {
+  if (!currentCollectionId) throw new Error('Undefined Collection');
 
-export const updateCollectionTitle = async (newTitle: string) => {};
+  await db.collection.update({
+    where: { id: currentCollectionId },
+    data: { description: newDescription }
+  })
+};
+
+export const updateCollectionTitle = async (newTitle: string) => {
+  if (!currentCollectionId) throw new Error('Undefined Collection');
+
+  await db.collection.update({
+    where: { id: currentCollectionId },
+    data: { title: newTitle }
+  })
+};
 
 export const deleteAttachment = async () => {};
 
