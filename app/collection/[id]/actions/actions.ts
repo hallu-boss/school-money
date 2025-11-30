@@ -137,18 +137,47 @@ export const withdrawFromCollection = async (
   amount: number,
   title: string,
 ) => {
-  const collection = await db.collection.findUniqueOrThrow({ where: { id: collectionId } })
-  if (!collection.bankAccountId) throw new Error("Collection does not have bank account");
-  const user = await db.user.findUniqueOrThrow({ where: { id: userId } })
-  if (!user.bankAccountId) throw new Error("User does not have bank account");
-  const transaction = performTransaction(
+  const collection = await db.collection.findUniqueOrThrow({ where: { id: collectionId } });
+  if (!collection.bankAccountId) throw new Error('Collection does not have bank account');
+  const user = await db.user.findUniqueOrThrow({ where: { id: userId } });
+  if (!user.bankAccountId) throw new Error('User does not have bank account');
+  const transaction = await performTransaction(
     TransactionType.WITHDRAWAL,
     title,
     collection.bankAccountId,
     user.bankAccountId,
     new Decimal(amount),
-    userId
+    userId,
   );
+  await db.transaction.update({
+    where: { id: transaction.id },
+    data: { collectionId },
+  });
+};
+
+export const depositToCollection = async (
+  collectionId: string,
+  userId: string,
+  amount: number,
+  title: string,
+) => {
+  const collection = await db.collection.findUniqueOrThrow({ where: { id: collectionId } });
+  if (!collection.bankAccountId) throw new Error('Collection does not have bank account');
+  const user = await db.user.findUniqueOrThrow({ where: { id: userId } });
+  if (!user.bankAccountId) throw new Error('User does not have bank account');
+  const transaction = await performTransaction(
+    TransactionType.TREASURER_DEPOSIT,
+    title,
+    user.bankAccountId,
+    collection.bankAccountId,
+    new Decimal(amount),
+    userId,
+  );
+
+  await db.transaction.update({
+    where: { id: transaction.id },
+    data: { collectionId },
+  });
 };
 
 export const closeCollection = async (collectionId: string) => {};

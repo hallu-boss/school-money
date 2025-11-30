@@ -38,6 +38,10 @@ export default async function Page({ params }: PageProps) {
     },
   });
 
+  const bankAccount = await db.bankAccount.findFirstOrThrow({
+    where: { userId: session.user.id }
+  })
+
   if (!membership) throw new Error('Unauthorized');
 
   const invoices = await db.invoice.findMany({
@@ -80,7 +84,7 @@ export default async function Page({ params }: PageProps) {
 
   return (
     <Box p={4} maxWidth={900} margin="auto" display="flex" flexDirection="column" gap={4}>
-      {isTreasurer && <TreasurerActionButtonsRow balance={raised} userId={session.user.id} collectionId={id}/>}
+      {isTreasurer && <TreasurerActionButtonsRow collectionBalance={raised} userBalance={Number(bankAccount.balance)} userId={session.user.id} collectionId={id}/>}
 
       {/* Header + Cover */}
       <CollectionTitleCard
