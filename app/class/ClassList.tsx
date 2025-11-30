@@ -144,7 +144,7 @@ export const ClassList = () => {
                   },
                 }}
                 onClick={() => {
-                  router.push(`collection/${cls.id}`); //TODO: przkierowanie jest do zmiany
+                  router.push(`class/${cls.id}`);
                 }}
               >
                 <CardContent
