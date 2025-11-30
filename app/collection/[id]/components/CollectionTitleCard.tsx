@@ -131,6 +131,36 @@ export const CollectionTitleCard = ({
     });
   };
 
+  const handleAttachmentDownload = async (attachmentId: string) => {
+    try {
+      const result = await downloadAttachment(attachmentId);
+      
+      if (result) {
+        // Konwersja base64 na blob
+        const byteCharacters = atob(result.fileBuffer);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: result.mimeType });
+        
+        // Tworzenie linku do pobrania
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = result.fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      console.error('Error downloading attachment:', error);
+      alert('Wystąpił błąd podczas pobierania pliku');
+    }
+  };
+
   return (
     <Card>
       {/* Cover image */}
@@ -282,7 +312,7 @@ export const CollectionTitleCard = ({
                 key={a.id}
                 label={a.label}
                 onDelete={editable ? () => handleAttachmentDelete(a.id) : undefined}
-                onClick={downloadAttachment}
+                onClick={() => handleAttachmentDownload(a.id)}
               />
             ))}
             {editable && (
