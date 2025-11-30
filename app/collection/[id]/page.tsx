@@ -19,10 +19,11 @@ interface PageProps {
 
 export default async function Page({ params }: PageProps) {
   const { id } = await params;
-  await getCollectionData(id);
+  const coll = await getCollectionData(id);
+  if (!coll || !coll.bankAccount) throw new Error("no collection");
   console.log(currentCollectionId);
   const session = await auth();
-  if (!session) redirect('/sign-in');
+  if (!session || !session.user?.id) redirect('/sign-in');
 
   const collection = await db.collection.findUnique({
     where: { id: id },
@@ -33,7 +34,7 @@ export default async function Page({ params }: PageProps) {
   const membership = await db.classMembership.findFirst({
     where: {
       classId: collection.classId,
-      userId: session.user?.id,
+      userId: session.user.id,
     },
   });
 
@@ -67,7 +68,7 @@ export default async function Page({ params }: PageProps) {
       .map((p) => p.payments[p.payments.length - 1])
       .filter((p) => p?.status === 'COMPLETED').length;
 
-    const raised = costPerChild * numOfPayments;
+    const raised = Number(coll.bankAccount?.balance) ?? 0;
     const goal = costPerChild * childrenCount;
 
     return { raised, goal };
@@ -79,7 +80,7 @@ export default async function Page({ params }: PageProps) {
 
   return (
     <Box p={4} maxWidth={900} margin="auto" display="flex" flexDirection="column" gap={4}>
-      {isTreasurer && <TreasurerActionButtonsRow />}
+      {isTreasurer && <TreasurerActionButtonsRow balance={raised} userId={session.user.id} collectionId={id}/>}
 
       {/* Header + Cover */}
       <CollectionTitleCard

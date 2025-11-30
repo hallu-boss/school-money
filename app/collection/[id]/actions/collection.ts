@@ -13,6 +13,7 @@ export async function getCollectionData(collectionId: string) {
   const collection = await db.collection.findUnique({
     where: { id: collectionId },
     include: {
+      bankAccount: true,
       invoices: true,
       transactions: {
         orderBy: { createdAt: 'desc' },
@@ -40,4 +41,5 @@ export async function getCollectionData(collectionId: string) {
     throw new Error('Unauthorized');
 
   currentCollectionId = collectionId;
+  return collection;
 }

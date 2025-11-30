@@ -6,6 +6,7 @@ import { performTransaction } from '@/lib/utils/transaction';
 import { auth } from '@/lib/auth';
 import { mkdir, readFile, writeFile } from 'fs/promises';
 import path from 'path';
+import { Decimal } from '@prisma/client/runtime/library';
 
 export const changeCollectionCover = async (file: File) => {
   if (!currentCollectionId) throw new Error('Undefined Collection');
@@ -24,8 +25,8 @@ export const changeCollectionCover = async (file: File) => {
 
   await db.collection.update({
     where: { id: currentCollectionId },
-    data: { coverUrl: `/uploads/collection/${currentCollectionId}/${fileName}` }
-  })
+    data: { coverUrl: `/uploads/collection/${currentCollectionId}/${fileName}` },
+  });
 };
 
 export const updateCollectionDescription = async (newDescription: string) => {
@@ -48,13 +49,13 @@ export const updateCollectionTitle = async (newTitle: string) => {
 
 export const deleteAttachment = async (invoiceId: string) => {
   await db.invoice.delete({
-    where: { id: invoiceId }
-  })
+    where: { id: invoiceId },
+  });
 };
 
 export const downloadAttachment = async (invoiceId: string) => {
   const invoice = await db.invoice.findUnique({
-    where: { id: invoiceId }
+    where: { id: invoiceId },
   });
 
   if (!invoice) {
@@ -63,15 +64,15 @@ export const downloadAttachment = async (invoiceId: string) => {
 
   // Odczytaj plik z dysku
   const filePath = path.join(process.cwd(), 'public', invoice.fileUrl);
-  
+
   try {
     const fileBuffer = await readFile(filePath);
     const fileName = path.basename(invoice.fileUrl);
-    
+
     return {
       fileBuffer: fileBuffer.toString('base64'),
       fileName: fileName,
-      mimeType: getMimeType(path.extname(fileName))
+      mimeType: getMimeType(path.extname(fileName)),
     };
   } catch (error) {
     console.error('Error reading file:', error);
@@ -92,9 +93,9 @@ function getMimeType(extension: string): string {
     '.xls': 'application/vnd.ms-excel',
     '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     '.zip': 'application/zip',
-    '.rar': 'application/x-rar-compressed'
+    '.rar': 'application/x-rar-compressed',
   };
-  
+
   return mimeTypes[extension.toLowerCase()] || 'application/octet-stream';
 }
 
@@ -104,7 +105,14 @@ export const uploadAttachment = async (file: File) => {
   if (!currentCollectionId) throw new Error('Undefined Collection');
 
   if (file.size == 0) return;
-  const userDir = path.join(process.cwd(), 'public', 'uploads', 'collection', currentCollectionId, 'invoices');
+  const userDir = path.join(
+    process.cwd(),
+    'public',
+    'uploads',
+    'collection',
+    currentCollectionId,
+    'invoices',
+  );
   await mkdir(userDir, { recursive: true });
 
   const filePath = path.join(userDir, file.name);
@@ -118,16 +126,30 @@ export const uploadAttachment = async (file: File) => {
       createdById: session.user.id,
       collectionId: currentCollectionId,
       fileUrl: `uploads/collection/${currentCollectionId}/invoices/${file.name}`,
-      description: ""
-    }
-  })
+      description: '',
+    },
+  });
 };
 
 export const withdrawFromCollection = async (
-  fromCollectionId: string,
-  toAccountId: string,
+  collectionId: string,
+  userId: string,
   amount: number,
-) => {};
+  title: string,
+) => {
+  const collection = await db.collection.findUniqueOrThrow({ where: { id: collectionId } })
+  if (!collection.bankAccountId) throw new Error("Collection does not have bank account");
+  const user = await db.user.findUniqueOrThrow({ where: { id: userId } })
+  if (!user.bankAccountId) throw new Error("User does not have bank account");
+  const transaction = performTransaction(
+    TransactionType.WITHDRAWAL,
+    title,
+    collection.bankAccountId,
+    user.bankAccountId,
+    new Decimal(amount),
+    userId
+  );
+};
 
 export const closeCollection = async (collectionId: string) => {};
 
