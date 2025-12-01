@@ -18,7 +18,6 @@ import AddIcon from '@mui/icons-material/Add';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import {
-  AttachmentProps,
   changeCollectionCover,
   deleteAttachment,
   downloadAttachment,
@@ -26,7 +25,13 @@ import {
   updateCollectionTitle,
   uploadAttachment,
 } from '../actions/actions';
-import { useState, useTransition } from 'react';
+import { useRef, useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
+
+export interface AttachmentProps {
+  id: string;
+  label: string;
+}
 
 interface CollectionTitleCardProps {
   coverImage: string | null;
@@ -51,6 +56,8 @@ export const CollectionTitleCard = ({
   attachments,
   editable,
 }: CollectionTitleCardProps) => {
+  const router = useRouter();
+
   const collectionProgress = (raised / goal) * 100;
 
   const [isEditingTitle, setEditingTitle] = useState(false);
@@ -60,6 +67,9 @@ export const CollectionTitleCard = ({
   const [draftDescription, setDraftDescription] = useState(description);
 
   const [isPending, startTransition] = useTransition();
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const attachmentInputRef = useRef<HTMLInputElement>(null);
 
   const saveTitle = () => {
     startTransition(async () => {
@@ -85,24 +95,99 @@ export const CollectionTitleCard = ({
     setEditingDescription(false);
   };
 
+  const handleCoverImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      startTransition(async () => {
+        await changeCollectionCover(file);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+        router.refresh();
+      });
+    }
+  };
+
+  const handleAttachmentChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      startTransition(async () => {
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          await uploadAttachment(file);
+        }
+        if (attachmentInputRef.current) {
+          attachmentInputRef.current.value = '';
+        }
+        router.refresh();
+      });
+    }
+  };
+
+  const handleAttachmentDelete = (attachmentId: string) => {
+    startTransition(async () => {
+      await deleteAttachment(attachmentId);
+      router.refresh();
+    });
+  };
+
+  const handleAttachmentDownload = async (attachmentId: string) => {
+    try {
+      const result = await downloadAttachment(attachmentId);
+
+      if (result) {
+        // Konwersja base64 na blob
+        const byteCharacters = atob(result.fileBuffer);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: result.mimeType });
+
+        // Tworzenie linku do pobrania
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = result.fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      console.error('Error downloading attachment:', error);
+      alert('Wystąpił błąd podczas pobierania pliku');
+    }
+  };
+
   return (
     <Card>
       {/* Cover image */}
       <Box position="relative">
         {coverImage && <CardMedia component="img" height="260" image={coverImage} alt="cover" />}
         {editable && (
-          <IconButton
-            onClick={changeCollectionCover}
-            sx={{
-              position: 'absolute',
-              top: 8,
-              right: 8,
-              bgcolor: 'rgba(255,255,255,0.8)',
-              '&:hover': { bgcolor: 'white' },
-            }}
-          >
-            <EditIcon />
-          </IconButton>
+          <>
+            <IconButton
+              onClick={() => fileInputRef.current?.click()}
+              sx={{
+                position: 'absolute',
+                top: 8,
+                right: 8,
+                bgcolor: 'rgba(255,255,255,0.8)',
+                '&:hover': { bgcolor: 'white' },
+              }}
+            >
+              <EditIcon />
+            </IconButton>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleCoverImageChange}
+              accept="image/*"
+              style={{ display: 'none' }}
+            />
+          </>
         )}
       </Box>
       <CardContent>
@@ -111,7 +196,7 @@ export const CollectionTitleCard = ({
           {!isEditingTitle ? (
             <>
               <Typography variant="h4" fontWeight="bold" gutterBottom>
-                {title}
+                {draftTitle}
               </Typography>
               {editable && (
                 <IconButton size="small" onClick={() => setEditingTitle(true)}>
@@ -179,7 +264,7 @@ export const CollectionTitleCard = ({
           </Stack>
 
           {/* VIEW MODE */}
-          {!isEditingDescription && <Typography mt={1}>{description}</Typography>}
+          {!isEditingDescription && <Typography mt={1}>{draftDescription}</Typography>}
 
           {/* EDIT MODE */}
           {isEditingDescription && (
@@ -226,11 +311,26 @@ export const CollectionTitleCard = ({
               <Chip
                 key={a.id}
                 label={a.label}
-                onDelete={editable ? deleteAttachment : undefined}
-                onClick={downloadAttachment}
+                onDelete={editable ? () => handleAttachmentDelete(a.id) : undefined}
+                onClick={() => handleAttachmentDownload(a.id)}
               />
             ))}
-            {editable && <Chip icon={<AddIcon />} label="Dodaj" onClick={uploadAttachment} />}
+            {editable && (
+              <>
+                <Chip
+                  icon={<AddIcon />}
+                  label="Dodaj"
+                  onClick={() => attachmentInputRef.current?.click()}
+                />
+                <input
+                  type="file"
+                  ref={attachmentInputRef}
+                  onChange={handleAttachmentChange}
+                  multiple // Umożliwia wybór wielu plików
+                  style={{ display: 'none' }}
+                />
+              </>
+            )}
           </Stack>
         </Box>
       </CardContent>

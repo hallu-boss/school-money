@@ -1,55 +1,53 @@
 import React from 'react';
-import { Box, Button } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { CollectionTitleCard } from './components/CollectionTitleCard';
 import {
   TransactionHistoryRow,
   TransactionHistoryTable,
 } from './components/TransactionHistoryTable';
-import { UnpaidChildrenGrid } from './components/UnpaidChildrenGrid';
+import { ChildData, ChildrenGrid, ChildStatus } from './components/ChildrenGrid';
 import db from '@/lib/db';
 import { notFound, redirect } from 'next/navigation';
 import { format } from 'date-fns';
 import path from 'path';
 import { auth } from '@/lib/auth';
+import { TreasurerActionButtonsRow } from './components/TreasurerActionButtonsRow';
+import { currentCollectionId, getCollectionData } from './actions/collection';
+import { CollectionState, TransactionType } from '@prisma/client';
+import { InfoCollectionCanceled } from './components/InfoCollectionCanceled';
 interface PageProps {
   params: { id: string };
 }
 
 export default async function Page({ params }: PageProps) {
-  const session = await auth();
-  if (!session) redirect('/sign-in');
-
   const { id } = await params;
+  const coll = await getCollectionData(id);
+  if (!coll || !coll.bankAccount) throw new Error('no collection');
+  console.log(currentCollectionId);
+  const session = await auth();
+  if (!session || !session.user?.id) redirect('/sign-in');
 
   const collection = await db.collection.findUnique({
     where: { id: id },
-    include: {
-      class: {
-        include: {
-          memberships: {
-            include: {
-              children: true,
-            },
-          },
-        },
-      },
-    },
   });
 
   if (!collection) notFound();
 
-  const membership = collection.class.memberships.find((m) => m.userId === session.user?.id);
+  const membership = await db.classMembership.findFirst({
+    where: {
+      classId: collection.classId,
+      userId: session.user.id,
+    },
+  });
+
+  const bankAccount = await db.bankAccount.findFirstOrThrow({
+    where: { userId: session.user.id },
+  });
 
   if (!membership) throw new Error('Unauthorized');
 
-  const isTreasurer = membership.userRole === 'TREASURER';
-
   const invoices = await db.invoice.findMany({
     where: { collectionId: id },
-    select: {
-      id: true,
-      fileUrl: true,
-    },
   });
 
   const transactions = await db.transaction.findMany({
@@ -61,46 +59,56 @@ export default async function Page({ params }: PageProps) {
     },
   });
 
-  const attachmentsList = invoices.map((i) => ({
-    id: i.id,
-    label: path.basename(i.fileUrl),
-  }));
+  const participants = await db.collectionParticipant.findMany({
+    where: { collectionId: id },
+    include: {
+      child: true,
+      payments: { orderBy: { createdAt: 'asc' } },
+    },
+  });
 
-  const allChildren = collection.class.memberships.flatMap((m) => m.children);
+  const getRaisedAndGoalAmount = () => {
+    const costPerChild = Number(collection.amountPerChild);
+    const childrenCount = participants.filter((p) => p.isActive).length;
 
-  const costPerChild = Number(collection.amountPerChild);
-  const childrenCount = allChildren.length;
+    const raised = Number(coll.bankAccount?.balance) ?? 0;
+    const goal = costPerChild * childrenCount;
 
-  const paymentTransactions = transactions.filter((t) => t.type === 'PAYMENT' && t.childId);
-  const uniqueChildIds = Array.from(new Set(paymentTransactions.map((t) => t.childId)));
+    return { raised, goal };
+  };
 
-  const raised = uniqueChildIds.length * costPerChild;
-  const goal = childrenCount * costPerChild;
+  const getMaxDeposit = () => {
+    const sumTransactionType = (type: TransactionType) => {
+      return transactions
+        .filter((tx) => tx.type === type)
+        .reduce((sum, tx) => sum + tx.amount.toNumber(), 0);
+    };
+    const w_sum = sumTransactionType(TransactionType.WITHDRAWAL);
+    const d_sum = sumTransactionType(TransactionType.TREASURER_DEPOSIT);
 
-  const unpaidChildren = allChildren
-    .filter((child) => !uniqueChildIds.includes(child.id))
-    .map((child) => ({
-      id: child.id,
-      name: child.name,
-      avatarUrl: child.avatarUrl || '',
-    }));
+    return w_sum - d_sum;
+  };
+
+  const { raised, goal } = getRaisedAndGoalAmount();
+
+  const isTreasurer = membership.userRole === 'TREASURER';
 
   return (
     <Box p={4} maxWidth={900} margin="auto" display="flex" flexDirection="column" gap={4}>
-      {isTreasurer && (
-        <Box display="flex" justifyContent="flex-end" gap={2}>
-          <Button variant="outlined" color="primary">
-            Wypłać pieniądze
-          </Button>
+      {isTreasurer && collection.state === CollectionState.ACTIVE && (
+        <TreasurerActionButtonsRow
+          collectionBalance={raised}
+          userBalance={getMaxDeposit()}
+          userId={session.user.id}
+          collectionId={id}
+        />
+      )}
 
-          <Button variant="outlined" color="error">
-            Zamknij zbiórkę
-          </Button>
-
-          <Button variant="outlined" color="primary">
-            Wpłać pieniądze
-          </Button>
-        </Box>
+      {collection.state === CollectionState.CANCELLED && (
+        <InfoCollectionCanceled collectionId={id} />
+      )}
+      {collection.state === CollectionState.CLOSED && (
+        <Typography sx={{ opacity: 0.6 }}>Zbiórka została zakończona</Typography>
       )}
 
       {/* Header + Cover */}
@@ -112,7 +120,10 @@ export default async function Page({ params }: PageProps) {
         raised={raised}
         goal={goal}
         description={collection.description ? collection.description : ''}
-        attachments={attachmentsList}
+        attachments={invoices.map((i) => ({
+          ...i,
+          label: path.basename(i.fileUrl),
+        }))}
         editable={isTreasurer}
       />
 
@@ -130,7 +141,26 @@ export default async function Page({ params }: PageProps) {
       />
 
       {/* Unpaid children */}
-      <UnpaidChildrenGrid unpaidChildren={unpaidChildren} />
+      {collection.state === 'ACTIVE' && (
+        <ChildrenGrid
+          userId={session.user?.id}
+          childrenGridData={participants.map((p): ChildData => {
+            const lastPayment = p.payments[p.payments.length - 1];
+            const status: ChildStatus = !p.isActive
+              ? 'SIGNED_OFF'
+              : lastPayment?.status === 'COMPLETED'
+                ? 'PAID'
+                : 'UNPAID';
+            const belongsToUser = p.child.parentId === session.user?.id;
+            return {
+              ...p.child,
+              id: p.id,
+              status,
+              belongsToUser,
+            };
+          })}
+        />
+      )}
     </Box>
   );
 }
