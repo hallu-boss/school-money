@@ -6,10 +6,20 @@ import { getClassCollections, getClassName } from '../actions/actions';
 import { Card, CardContent, Paper, Stack, Typography, Button, Box, Container } from '@mui/material';
 import Image from 'next/image';
 
+type CollectionDTO = {
+  id: string;
+  title: string;
+  description: string | null;
+  coverUrl: string | null;
+  startAt: Date;
+  endAt: Date;
+  classId: string;
+};
+
 export const CollectionList = () => {
   const router = useRouter();
 
-  const [collections, setCollections] = useState<Collection[]>([]);
+  const [collections, setCollections] = useState<CollectionDTO[]>([]);
   const [className, setClassName] = useState<string | null>('');
   const { id } = useParams<{ id: string }>();
 
@@ -20,7 +30,7 @@ export const CollectionList = () => {
         throw new Error();
       }
       const className = await getClassName(id);
-      setClassName(className);
+      setClassName(className || '');
       setCollections(collections);
     } catch (err) {
       console.log(err);
