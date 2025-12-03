@@ -310,3 +310,37 @@ export const removeChildFromClass = async (childId: string, classId: string) => 
 
   return { succes: true, message: 'Pomyślnie wypisano dziecko z klasy' };
 };
+
+//-----------------------------------------------------------------
+export const getClassCollections = async (classId: string) => {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error('Unauthorized');
+
+  const collections = await db.collection.findMany({
+    where: { classId },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      coverUrl: true,
+      startAt: true,
+      endAt: true,
+      classId: true,
+    },
+  });
+
+  return collections;
+};
+
+export const getClassName = async (classId: string) => {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error('Unauthorized');
+
+  const cls = await db.class.findFirst({
+    where: { id: classId },
+  });
+
+  return cls?.name || null;
+};
+
+//-----------------------------------------------------------------
