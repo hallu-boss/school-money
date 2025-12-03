@@ -318,12 +318,18 @@ export const getClassCollections = async (classId: string) => {
 
   const collections = await db.collection.findMany({
     where: { classId },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      coverUrl: true,
+      startAt: true,
+      endAt: true,
+      classId: true,
+    },
   });
 
-  return collections.map((c) => ({
-    ...c,
-    amountPerChild: c.amountPerChild.toNumber(),
-  }));
+  return collections;
 };
 
 export const getClassName = async (classId: string) => {
