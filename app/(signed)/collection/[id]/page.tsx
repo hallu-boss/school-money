@@ -15,6 +15,7 @@ import { TreasurerActionButtonsRow } from './components/TreasurerActionButtonsRo
 import { currentCollectionId, getCollectionData } from './actions/collection';
 import { CollectionState, TransactionType } from '@prisma/client';
 import { InfoCollectionCanceled } from './components/InfoCollectionCanceled';
+import BackToClassButton from './components/BackToClassButton';
 interface PageProps {
   params: { id: string };
 }
@@ -95,6 +96,7 @@ export default async function Page({ params }: PageProps) {
 
   return (
     <Box p={4} maxWidth={900} margin="auto" display="flex" flexDirection="column" gap={4}>
+      <BackToClassButton classId={collection.classId}/>
       {isTreasurer && collection.state === CollectionState.ACTIVE && (
         <TreasurerActionButtonsRow
           collectionBalance={raised}
