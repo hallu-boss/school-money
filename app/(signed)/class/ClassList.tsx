@@ -173,7 +173,8 @@ export const ClassList = () => {
                         variant="outlined"
                         color="error"
                         onClick={(e) => {
-                          (e.stopPropagation(), handleDeleteClass(cls.id));
+                          e.stopPropagation(); 
+                          handleDeleteClass(cls.id);
                         }}
                       >
                         Usuń klasę

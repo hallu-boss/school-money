@@ -9,6 +9,7 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout(props: { children: React.ReactNode }) {
+  console.log("GLOBAL LAYOUT loaded");
   return (
     <html lang="en" suppressHydrationWarning>
       <body>

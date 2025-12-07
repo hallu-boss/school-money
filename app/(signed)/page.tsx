@@ -1,14 +1,12 @@
 import { auth } from '@/lib/auth';
 import { Container, Paper, Typography } from '@mui/material';
 import { redirect } from 'next/navigation';
-import Navbar from './components/Navbar';
 
 export default async function Home() {
   const session = await auth();
   if (!session) redirect('/sign-in');
   return (
     <>
-      <Navbar></Navbar>
       <Container maxWidth="sm" sx={{ mt: 8 }}>
         <Typography variant="h4" component="h1" align="center" gutterBottom>
           SchoolMoney Project – HOME page

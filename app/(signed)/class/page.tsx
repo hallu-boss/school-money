@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation';
-import Navbar from '../components/Navbar';
 import { auth } from '@/lib/auth';
 import { ClassList } from './ClassList';
 
@@ -10,7 +9,6 @@ export default async function Home() {
 
   return (
     <>
-      <Navbar></Navbar>
       <ClassList></ClassList>
     </>
   );

@@ -4,7 +4,6 @@ import { redirect } from 'next/navigation';
 import { UserInformation } from './user/UserInformation';
 import { ChildSection } from './child/ChildSection';
 import { returnProperUser } from './actions/actions';
-import Navbar from '../components/Navbar';
 
 export default async function Home() {
   const session = await auth();
@@ -15,7 +14,6 @@ export default async function Home() {
   const plainUser = user ? JSON.parse(JSON.stringify(user)) : null;
   return (
     <>
-      <Navbar></Navbar>
       <Container sx={{ mt: 8 }}>
         <Typography variant="h4" component="h1" align="center" gutterBottom>
           Mój profil
