@@ -87,7 +87,7 @@ export default async function Page({ params }: PageProps) {
     const w_sum = sumTransactionType(TransactionType.WITHDRAWAL);
     const d_sum = sumTransactionType(TransactionType.TREASURER_DEPOSIT);
 
-    return w_sum - d_sum;
+    return Math.min(w_sum - d_sum, Number(bankAccount.balance));
   };
 
   const { raised, goal } = getRaisedAndGoalAmount();
