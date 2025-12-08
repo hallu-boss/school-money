@@ -5,7 +5,11 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { SignOut } from './SignOut';
 
-export default function Navbar() {
+interface NavbarProps {
+  balance: string;
+}
+
+export default function Navbar({ balance }: NavbarProps) {
   const pathname = usePathname();
 
   const pages = [
@@ -34,6 +38,9 @@ export default function Navbar() {
           </Button>
         ))}
         <Box sx={{ flexGrow: 1 }}></Box>
+        <Typography sx={{m: 2}}>
+          {balance}
+        </Typography>
         <SignOut />
       </Toolbar>
     </AppBar>
