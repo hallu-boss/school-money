@@ -24,6 +24,7 @@
     "@mui/icons-material": "^7.3.4",
     "@mui/material": "^7.3.4",
     "@mui/material-nextjs": "^7.3.3",
+    "@mui/x-date-pickers": "^8.21.0",
     "@prisma/client": "^6.17.1",
     "argon2": "^0.44.0",
     "date-fns": "^4.1.0",

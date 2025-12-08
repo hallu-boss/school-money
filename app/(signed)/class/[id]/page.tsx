@@ -1,9 +1,17 @@
+import { Box } from '@mui/material';
 import { CollectionList } from './CollectionList';
+import CreateCollectionButton from './CreateCollectionButton';
 
-export default async function Home() {
+interface PageProps {
+  params: { id: string };
+}
+
+export default async function Home({ params }: PageProps) {
+  const { id } = await params;
   return (
-    <>
-      <CollectionList></CollectionList>
-    </>
+    <Box p={4} maxWidth={900} margin="auto" display="flex" flexDirection="column" gap={4}>
+      <CreateCollectionButton classId={id}/>
+      <CollectionList />
+    </Box>
   );
 }

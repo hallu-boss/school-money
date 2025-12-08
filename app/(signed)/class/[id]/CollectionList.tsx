@@ -1,5 +1,4 @@
 'use client';
-import { Collection } from '@prisma/client';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { getClassCollections, getClassName } from '../actions/actions';
