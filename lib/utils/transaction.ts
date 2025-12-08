@@ -9,6 +9,7 @@ export const performTransaction = async (
   toAccountId: string,
   amount: Decimal,
   userId: string,
+  collectionId?: string,
 ) => {
   const fromBankAccount = await db.bankAccount.findUniqueOrThrow({
     where: { id: fromAccountId },
@@ -24,6 +25,7 @@ export const performTransaction = async (
       fromAccountId,
       toAccountId,
       userId,
+      collectionId
     },
   });
 

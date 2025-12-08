@@ -180,6 +180,107 @@ export const depositToCollection = async (
   });
 };
 
+export const closeCollection = async (collectionId: string, userId: string) => {
+  try {
+    const session = await auth();
+    
+    if (!session?.user?.id) {
+      throw new Error('Musisz być zalogowany');
+    }
+
+    if (session.user.id !== userId) {
+      throw new Error('Nie masz uprawnień do wykonania tej akcji');
+    }
+
+    // 1. Pobierz zbiórkę z informacją o klasie
+    const collection = await db.collection.findUniqueOrThrow({
+      where: { id: collectionId },
+      include: {
+        class: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    if (!collection) {
+      throw new Error('Zbiórka nie istnieje');
+    }
+
+    // 2. Sprawdź czy zbiórka jest aktywna
+    if (collection.state !== CollectionState.ACTIVE) {
+      throw new Error('Zbiórka nie jest aktywna');
+    }
+
+    // 3. Sprawdź czy użytkownik jest skarbnikiem w klasie tej zbiórki
+    const treasurerMembership = await db.classMembership.findFirst({
+      where: {
+        classId: collection.classId,
+        userId: userId,
+        userRole: 'TREASURER',
+      },
+    });
+
+    if (!treasurerMembership) {
+      throw new Error('Nie jesteś skarbnikiem tej klasy');
+    }
+
+    const user = await db.user.findFirstOrThrow({
+      where: { id: userId }
+    })
+
+    if (!user.bankAccountId) throw new Error("Użytkownik nie posiada konta bankowego");
+
+    // 4. Sprawdź czy zebrano pełną kwotę (opcjonalnie, ale zalecane)
+    const collectionBankAccount = await db.bankAccount.findUnique({
+      where: { collectionId: collectionId },
+    });
+
+    if (!collectionBankAccount) {
+      throw new Error('Zbiórka nie ma konta bankowego');
+    }
+
+    const activeParticipants = await db.collectionParticipant.count({
+      where: {
+        collectionId: collectionId,
+        isActive: true,
+      },
+    });
+
+    const expectedAmount = Number(collection.amountPerChild) * activeParticipants;
+    const collectedAmount = Number(collectionBankAccount.balance);
+
+    if (collectedAmount < expectedAmount) {
+      throw new Error(`Nie zebrano pełnej kwoty. Zebrano: ${collectedAmount}zł, Wymagane: ${expectedAmount}zł`);
+    }
+
+    await performTransaction(TransactionType.WITHDRAWAL, "Zakończono zbiórkę", collectionBankAccount.id, user.bankAccountId, collectionBankAccount.balance, userId, collectionId)
+
+
+    // 5. Zaktualizuj stan zbiórki na CLOSED
+    await db.collection.update({
+      where: { id: collectionId },
+      data: {
+        state: CollectionState.CLOSED,
+        endAt: new Date(), // Opcjonalnie: zaktualizuj datę zakończenia na teraz
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Zbiórka została pomyślnie zakończona',
+    };
+  } catch (error) {
+    console.error('Error closing collection:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Wystąpił nieznany błąd',
+    };
+  }
+};
+
 export const cancelCollection = async (collectionId: string, userId: string) => {
   const withdrawalSum = await db.transaction.aggregate({
     where: {

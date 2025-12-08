@@ -10,11 +10,12 @@ import {
   Alert,
 } from '@mui/material';
 import { useState } from 'react';
-import { withdrawFromCollection, depositToCollection, cancelCollection } from '../actions/actions';
+import { withdrawFromCollection, depositToCollection, cancelCollection, closeCollection } from '../actions/actions';
 import { useRouter } from 'next/navigation';
 import { ConfirmationDialog } from './ConfirmDialog';
 
 interface TreasurerActionButtonsRowProps {
+  goal: number;
   collectionBalance: number;
   userBalance: number;
   userId: string;
@@ -22,6 +23,7 @@ interface TreasurerActionButtonsRowProps {
 }
 
 export const TreasurerActionButtonsRow = ({
+  goal,
   collectionBalance,
   userBalance,
   userId,
@@ -31,6 +33,7 @@ export const TreasurerActionButtonsRow = ({
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [depositOpen, setDepositOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [closeOpen, setCloseOpen] = useState(false); // Dodano stan dla zakończenia zbiórki
   const [amount, setAmount] = useState<string>('');
   const [reason, setReason] = useState<string>('');
   const [amountError, setAmountError] = useState<string>('');
@@ -79,15 +82,33 @@ export const TreasurerActionButtonsRow = ({
     setCancelOpen(false);
   };
 
+  // Handlers for Close Collection Dialog (dodano)
+  const handleCloseClickOpen = () => {
+    setCloseOpen(true);
+  };
+
+  const handleCloseClose = () => {
+    setCloseOpen(false);
+  };
+
   const handleCancelConfirm = async () => {
     try {
       await cancelCollection(collectionId, userId);
       handleCancelClose();
       router.refresh();
-      // Możesz też dodać tu dodatkowe akcje po udanym zamknięciu zbiórki
     } catch (error) {
       console.error('Błąd podczas zamykania zbiórki:', error);
-      // Tutaj możesz dodać obsługę błędów, np. wyświetlenie snackbar/alert
+    }
+  };
+
+  // Dodano funkcję do potwierdzenia zakończenia zbiórki
+  const handleCloseConfirm = async () => {
+    try {
+      await closeCollection(collectionId, userId);
+      handleCloseClose();
+      router.refresh();
+    } catch (error) {
+      console.error('Błąd podczas zakończenia zbiórki:', error);
     }
   };
 
@@ -204,10 +225,21 @@ export const TreasurerActionButtonsRow = ({
         variant="outlined"
         color="error"
         onClick={handleCancelClickOpen}
-        disabled={userBalance !== 0}
+        disabled={collectionBalance !== 0} // Zbiórkę można anulować tylko gdy saldo jest 0
       >
-        Zamknij zbiórkę
+        Anuluj zbiórkę
       </Button>
+
+      {/* Dodano przycisk "Zakończ zbiórkę" - widoczny tylko gdy zebrano pełną kwotę */}
+      {collectionBalance === goal && (
+        <Button 
+          variant="contained" 
+          color="success" 
+          onClick={handleCloseClickOpen}
+        >
+          Zakończ zbiórkę
+        </Button>
+      )}
 
       <Button variant="outlined" color="primary" onClick={handleDepositClickOpen}>
         Wpłać pieniądze
@@ -316,13 +348,25 @@ export const TreasurerActionButtonsRow = ({
       {/* Cancel Collection Confirmation Dialog */}
       <ConfirmationDialog
         open={cancelOpen}
-        title="Zamknij zbiórkę"
-        message="Czy na pewno chcesz zamknąć tę zbiórkę? Tej operacji nie można cofnąć."
-        confirmText="Tak, zamknij zbiórkę"
+        title="Anuluj zbiórkę"
+        message="Czy na pewno chcesz anulować tę zbiórkę? Tej operacji nie można cofnąć. Zbiórkę można anulować tylko gdy saldo wynosi 0 zł."
+        confirmText="Tak, anuluj zbiórkę"
         cancelText="Nie, anuluj"
         confirmColor="error"
         onConfirm={handleCancelConfirm}
         onCancel={handleCancelClose}
+      />
+
+      {/* Close Collection Confirmation Dialog (dodano) */}
+      <ConfirmationDialog
+        open={closeOpen}
+        title="Zakończ zbiórkę"
+        message="Czy na pewno chcesz zakończyć tę zbiórkę? Po zakończeniu zbiórki nie będzie możliwości dokonywania wpłat ani wypłat."
+        confirmText="Tak, zakończ zbiórkę"
+        cancelText="Nie, anuluj"
+        confirmColor="success"
+        onConfirm={handleCloseConfirm}
+        onCancel={handleCloseClose}
       />
     </Box>
   );

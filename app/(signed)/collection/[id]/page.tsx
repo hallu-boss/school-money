@@ -99,6 +99,7 @@ export default async function Page({ params }: PageProps) {
       <BackToClassButton classId={collection.classId}/>
       {isTreasurer && collection.state === CollectionState.ACTIVE && (
         <TreasurerActionButtonsRow
+          goal={goal}
           collectionBalance={raised}
           userBalance={getMaxDeposit()}
           userId={session.user.id}
