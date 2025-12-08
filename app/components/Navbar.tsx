@@ -13,7 +13,6 @@ export default function Navbar({ balance }: NavbarProps) {
   const pathname = usePathname();
 
   const pages = [
-    { name: 'Home', href: '/' },
     { name: 'Profil', href: '/profile' },
     { name: 'Klasa', href: '/class' },
   ];
