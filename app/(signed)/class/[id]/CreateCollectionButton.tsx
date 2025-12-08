@@ -53,11 +53,11 @@ export default function CreateCollectionButton({ classId }: CreateCollectionButt
   const handleOpen = () => setOpen(true);
   const handleClose = () => {
     setOpen(false);
-    setFormData({ 
-      title: '', 
-      description: '', 
+    setFormData({
+      title: '',
+      description: '',
       amountPerChild: '',
-      endDate: ''
+      endDate: '',
     });
     setCoverImage(null);
     setPreviewUrl('');
@@ -116,7 +116,7 @@ export default function CreateCollectionButton({ classId }: CreateCollectionButt
       formDataToSend.append('amountPerChild', formData.amountPerChild);
       formDataToSend.append('endDate', formData.endDate);
       formDataToSend.append('classId', classId);
-      
+
       if (coverImage) {
         formDataToSend.append('coverImage', coverImage);
       }
@@ -148,29 +148,17 @@ export default function CreateCollectionButton({ classId }: CreateCollectionButt
 
   return (
     <>
-      <Button
-        variant="contained"
-        startIcon={<AddIcon />}
-        onClick={handleOpen}
-        sx={{ mb: 3 }}
-      >
+      <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpen} sx={{ mb: 3 }}>
         Nowa zbiórka
       </Button>
 
-      <Modal
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="create-collection-modal"
-      >
+      <Modal open={open} onClose={handleClose} aria-labelledby="create-collection-modal">
         <Box sx={modalStyle}>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
             <Typography variant="h5" component="h2">
               Nowa zbiórka
             </Typography>
-            <IconButton 
-              onClick={handleClose}
-              disabled={loading}
-            >
+            <IconButton onClick={handleClose} disabled={loading}>
               <CloseIcon />
             </IconButton>
           </Box>
@@ -208,12 +196,7 @@ export default function CreateCollectionButton({ classId }: CreateCollectionButt
                 <Typography variant="body2" color="text.secondary" mb={1}>
                   Zdjęcie okładki
                 </Typography>
-                <Button
-                  variant="outlined"
-                  component="label"
-                  fullWidth
-                  disabled={loading}
-                >
+                <Button variant="outlined" component="label" fullWidth disabled={loading}>
                   Wybierz zdjęcie
                   <input
                     type="file"
@@ -247,7 +230,7 @@ export default function CreateCollectionButton({ classId }: CreateCollectionButt
                 onChange={handleChange}
                 required
                 type="number"
-                inputProps={{ step: "0.01", min: "0.01" }}
+                inputProps={{ step: '0.01', min: '0.01' }}
                 InputProps={{
                   endAdornment: <InputAdornment position="end">zł</InputAdornment>,
                 }}
@@ -265,23 +248,22 @@ export default function CreateCollectionButton({ classId }: CreateCollectionButt
                 required
                 fullWidth
                 InputLabelProps={{ shrink: true }}
-                inputProps={{ 
+                inputProps={{
                   min: getTomorrowDate(),
                 }}
                 disabled={loading}
               />
 
               <Stack direction="row" spacing={2} justifyContent="flex-end">
-                <Button 
-                  onClick={handleClose}
-                  disabled={loading}
-                >
+                <Button onClick={handleClose} disabled={loading}>
                   Anuluj
                 </Button>
                 <Button
                   type="submit"
                   variant="contained"
-                  disabled={loading || !formData.title || !formData.amountPerChild || !formData.endDate}
+                  disabled={
+                    loading || !formData.title || !formData.amountPerChild || !formData.endDate
+                  }
                 >
                   {loading ? <CircularProgress size={24} /> : 'Stwórz zbiórkę'}
                 </Button>

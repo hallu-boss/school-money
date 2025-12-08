@@ -37,9 +37,7 @@ export default function Navbar({ balance }: NavbarProps) {
           </Button>
         ))}
         <Box sx={{ flexGrow: 1 }}></Box>
-        <Typography sx={{m: 2}}>
-          {balance}
-        </Typography>
+        <Typography sx={{ m: 2 }}>{balance}</Typography>
         <SignOut />
       </Toolbar>
     </AppBar>

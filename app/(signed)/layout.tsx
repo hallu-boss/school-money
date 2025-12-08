@@ -7,9 +7,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const session = await auth();
   if (!session?.user || !session?.user?.id) redirect('/sign-in');
   return (
-      <>
-        <Navbar balance={await getBalance(session.user.id)}/>
-        {children}
-      </>
+    <>
+      <Navbar balance={await getBalance(session.user.id)} />
+      {children}
+    </>
   );
 }

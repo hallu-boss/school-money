@@ -88,13 +88,7 @@ export async function createCollection(formData: FormData) {
       // 2.4. Przetwarzanie zdjęcia okładki
       let coverUrl = null;
       if (file && file.size > 0) {
-        const userDir = path.join(
-          process.cwd(),
-          'public',
-          'uploads',
-          'collection',
-          collection.id,
-        );
+        const userDir = path.join(process.cwd(), 'public', 'uploads', 'collection', collection.id);
         await mkdir(userDir, { recursive: true });
 
         const timestamp = Date.now();
@@ -107,7 +101,7 @@ export async function createCollection(formData: FormData) {
         await writeFile(filePath, buffer);
 
         coverUrl = `/uploads/collection/${collection.id}/${fileName}`;
-        
+
         // Zaktualizuj zbiórkę z coverUrl
         await tx.collection.update({
           where: { id: collection.id },
@@ -138,9 +132,9 @@ export async function createCollection(formData: FormData) {
         );
       }
 
-      return { 
-        collection: { ...updatedCollection, coverUrl }, 
-        participantsCount: allChildren.length 
+      return {
+        collection: { ...updatedCollection, coverUrl },
+        participantsCount: allChildren.length,
       };
     });
 
@@ -155,7 +149,7 @@ export async function createCollection(formData: FormData) {
     };
   } catch (error) {
     console.error('Error creating collection:', error);
-    
+
     // Bardziej szczegółowe komunikaty błędów
     if (error instanceof Error) {
       if (error.message.includes('Unique constraint')) {
@@ -171,7 +165,7 @@ export async function createCollection(formData: FormData) {
         };
       }
     }
-    
+
     return {
       success: false,
       error: 'Wystąpił błąd podczas tworzenia zbiórki. Spróbuj ponownie.',

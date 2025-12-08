@@ -183,7 +183,7 @@ export const depositToCollection = async (
 export const closeCollection = async (collectionId: string, userId: string) => {
   try {
     const session = await auth();
-    
+
     if (!session?.user?.id) {
       throw new Error('Musisz być zalogowany');
     }
@@ -228,10 +228,10 @@ export const closeCollection = async (collectionId: string, userId: string) => {
     }
 
     const user = await db.user.findFirstOrThrow({
-      where: { id: userId }
-    })
+      where: { id: userId },
+    });
 
-    if (!user.bankAccountId) throw new Error("Użytkownik nie posiada konta bankowego");
+    if (!user.bankAccountId) throw new Error('Użytkownik nie posiada konta bankowego');
 
     // 4. Sprawdź czy zebrano pełną kwotę (opcjonalnie, ale zalecane)
     const collectionBankAccount = await db.bankAccount.findUnique({
@@ -253,11 +253,20 @@ export const closeCollection = async (collectionId: string, userId: string) => {
     const collectedAmount = Number(collectionBankAccount.balance);
 
     if (collectedAmount < expectedAmount) {
-      throw new Error(`Nie zebrano pełnej kwoty. Zebrano: ${collectedAmount}zł, Wymagane: ${expectedAmount}zł`);
+      throw new Error(
+        `Nie zebrano pełnej kwoty. Zebrano: ${collectedAmount}zł, Wymagane: ${expectedAmount}zł`,
+      );
     }
 
-    await performTransaction(TransactionType.WITHDRAWAL, "Zakończono zbiórkę", collectionBankAccount.id, user.bankAccountId, collectionBankAccount.balance, userId, collectionId)
-
+    await performTransaction(
+      TransactionType.WITHDRAWAL,
+      'Zakończono zbiórkę',
+      collectionBankAccount.id,
+      user.bankAccountId,
+      collectionBankAccount.balance,
+      userId,
+      collectionId,
+    );
 
     // 5. Zaktualizuj stan zbiórki na CLOSED
     await db.collection.update({

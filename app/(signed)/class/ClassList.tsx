@@ -173,7 +173,7 @@ export const ClassList = () => {
                         variant="outlined"
                         color="error"
                         onClick={(e) => {
-                          e.stopPropagation(); 
+                          e.stopPropagation();
                           handleDeleteClass(cls.id);
                         }}
                       >

@@ -10,7 +10,12 @@ import {
   Alert,
 } from '@mui/material';
 import { useState } from 'react';
-import { withdrawFromCollection, depositToCollection, cancelCollection, closeCollection } from '../actions/actions';
+import {
+  withdrawFromCollection,
+  depositToCollection,
+  cancelCollection,
+  closeCollection,
+} from '../actions/actions';
 import { useRouter } from 'next/navigation';
 import { ConfirmationDialog } from './ConfirmDialog';
 
@@ -232,11 +237,7 @@ export const TreasurerActionButtonsRow = ({
 
       {/* Dodano przycisk "Zakończ zbiórkę" - widoczny tylko gdy zebrano pełną kwotę */}
       {collectionBalance === goal && (
-        <Button 
-          variant="contained" 
-          color="success" 
-          onClick={handleCloseClickOpen}
-        >
+        <Button variant="contained" color="success" onClick={handleCloseClickOpen}>
           Zakończ zbiórkę
         </Button>
       )}

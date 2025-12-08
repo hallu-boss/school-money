@@ -25,7 +25,7 @@ export const performTransaction = async (
       fromAccountId,
       toAccountId,
       userId,
-      collectionId
+      collectionId,
     },
   });
 
