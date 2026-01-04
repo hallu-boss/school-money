@@ -2,6 +2,7 @@
 
 import { auth } from '@/lib/auth';
 import db from '@/lib/db';
+import { generateClassCode } from '@/lib/utils/generateClassCode';
 import { ClassMembershipRole } from '@prisma/client';
 import { mkdir, writeFile } from 'fs/promises';
 import path from 'path';
@@ -29,7 +30,6 @@ export const createClass = async (payload: FormData) => {
 
   const schoolId = payload.get('schoolId') as string | null;
   const file = payload.get('classImage') as File | null;
-  const classCode = payload.get('joinCode') as string | null;
   const className = payload.get('className') as string;
 
   //TODO: Dodatkowa walidacja danych (nie za bardzo potrzebne ale może się coś sknocić)
@@ -46,11 +46,25 @@ export const createClass = async (payload: FormData) => {
     throw new Error("This schoolId doesn't exist");
   }
 
+  //pętla do generowania i sprawdzania czy istnieje taka klasa z tym kodem aby się nie powtarzało
+  //tak w sumie to trochę niebezpieczne bo hehehe jest szansa, że kiedyś trafi się na wszystkie możliwe kombinacje XD
+  let classCode: string = generateClassCode() ?? '';
+  while (true) {
+    const resultClassCode = await db.class.findUnique({
+      where: { accessCode: classCode },
+    });
+
+    if (!resultClassCode) {
+      break;
+    }
+    classCode = generateClassCode();
+  }
+
   const newClass = await db.class.create({
     data: {
       schoolId: schoolId,
-      accessCode: classCode,
       name: className,
+      accessCode: classCode,
       createdById: session.user.id,
     },
   });
@@ -87,7 +101,7 @@ export const createClass = async (payload: FormData) => {
   });
 
   console.log(payload);
-  return { success: true, message: 'Successfully added class' };
+  return { success: true, message: 'Successfully added class', payload: classCode };
 };
 
 export const getUserClasses = async () => {
